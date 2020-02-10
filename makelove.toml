@@ -1,0 +1,51 @@
+# makelove SpectacularShatterBuddies.cfg
+# makelove --param version=0.5
+# makelove --cfg build-directory="/home/joel/ssb_builds"
+
+name = "Spectacular Shatter Buddies"
+love_version = "0.10.2"
+default_targets = ["win32", "win64", "osx", "appimage"]
+build_directory = "builds"
+
+love_files = [
+	"::git-ls-tree::",
+	"-*/.*", # hidden files
+	"-./tools/*", "-./other/*", "-./characters/#myrtle",
+	"-*.blend",	"-*.bat",
+	"-./README.md",
+	"./builddata.lua",
+]
+# love_files = [
+# 	"+*",
+# 	"-./.git/*", "-./untracked/*", "-./tools/*", "-./other/*",
+# 	"-./characters/#myrtle",
+# 	"-*.blend", "-*blend1", "-*.xcf",
+# 	"-*.bat", "-*/desktop.ini", "-*/.gitignore",
+# 	"-./README.md",
+# 	"-./ssb.sublime-project",
+# 	"-./ssb.sublime-workspace"
+# ]
+[archive_files]
+"untracked/deps/libraries.txt" = "libraries.txt"
+"untracked/deps/licenses" = "licenses" # directory
+"untracked/.itch.toml" = ".itch.toml"
+
+[hooks]
+prebuild = [ # executed before anything is done
+	"generate_changelog.py", # generate from git history
+	"generate_builddata.py", # generates .lua file with commit, date, etc.
+]
+postbuild = [
+	"butler_push.py", # upload to itch
+	"update_current_version.py", # update current version info on lobby server
+]
+
+[win32]
+love_binaries = "/home/joel/Downloads/love-0.10.2-win32" # custom binary that has a changed icon
+shared_libraries = [
+	"tools/enet2/enet2.dll",
+	"tools/libcurl.dll"
+]
+
+# osx and appimage need some extra configuration as well, but I don't know what exactly
+
