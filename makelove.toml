@@ -41,7 +41,7 @@ postbuild = [
 ]
 
 [win32]
-love_binaries = "/home/joel/Downloads/love-0.10.2-win32" # custom binary that has a changed icon
+#love_binaries = "/home/joel/Downloads/love-0.10.2-win32" # custom binary that has a changed icon
 shared_libraries = [
 	"tools/enet2/enet2.dll",
 	"tools/libcurl.dll"

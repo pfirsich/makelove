@@ -8,8 +8,6 @@ import subprocess
 from email.utils import formatdate
 import zipfile
 
-import appdirs
-
 from config import get_config
 from buildparams import all_targets
 from hooks import execute_hook
@@ -18,7 +16,6 @@ from jsonfile import JsonFile
 from windows import build_windows
 from linux import build_linux
 
-app_dirs = appdirs.AppDirs("makelove")
 all_hooks = ["prebuild", "postgamedir", "postbuild"]
 
 # Sadly argparse cannot handle nargs="*" and choices and will error if not at least one argument is provided
