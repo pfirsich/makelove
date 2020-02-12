@@ -3,9 +3,9 @@
 # makelove --cfg build-directory="/home/joel/ssb_builds"
 
 name = "Spectacular Shatter Buddies"
-love_version = "0.10.2"
-default_targets = ["win32", "win64", "osx", "appimage"]
-build_directory = "builds"
+love_version = "0.10.2" # guesses from conf.lua
+default_targets = ["win32", "win64", "osx", "appimage"] # pass otherwise
+build_directory = "builds" # makelove-build by default
 
 love_files = [
 	"::git-ls-tree::",

@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 import sys
+import re
 
 import toml
 
@@ -36,6 +37,24 @@ def get_default_targets():
     return targets
 
 
+def guess_love_version():
+    with open("conf.lua") as f:
+        conf_lua = f.read()
+
+    regex = re.compile(r"(?<!--)\.version\s*=\s*\"(.*)\"")
+    matches = regex.findall(conf_lua)
+    if len(matches) == 0:
+        return None
+    elif len(matches) > 1:
+        print(
+            "Could not determine löve version unambiguously. Candidates: {}".format(
+                matches
+            )
+        )
+        return None
+    return matches[0]
+
+
 def expand_wildcard(pattern):
     # Be aware of .gitignore, .hgignore, .ignore and ignore hidden files
     pass
@@ -64,8 +83,13 @@ def get_config(args):
         config["name"] = guess_name()
         print("Guessing project name as '{}'".format(config["name"]))
     if not "love_version" in config:
-        config["love_version"] = "11.3"  # update this manually here
-        print("Assuming default löve version '{}'".format(config["love_version"]))
+        conf_love_version = guess_love_version()
+        if conf_love_version:
+            config["love_version"] = conf_love_version
+            print("Guessed löve version from conf.lua: {}".format(conf_love_version))
+        else:
+            config["love_version"] = "11.3"  # update this manually here
+            print("Assuming default löve version '{}'".format(config["love_version"]))
     if not "default_targets" in config:
         config["default_targets"] = get_default_targets()
         print(
