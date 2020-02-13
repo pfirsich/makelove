@@ -6,8 +6,11 @@ import sys
 import os
 import shutil
 from zipfile import ZipFile
-from urllib.request import urlopen
+from urllib.request import urlopen, urlretrieve, URLError
 from io import BytesIO
+import subprocess
+import tempfile
+from PIL import Image, UnidentifiedImageError
 
 import appdirs
 
@@ -54,6 +57,117 @@ def download_love(version, platform):
     print("Download complete")
 
 
+def get_rcedit_path():
+    return os.path.join(appdirs.user_cache_dir("makelove"), "rcedit-x64.exe")
+
+
+def prepare_rcedit():
+    rcedit_path = get_rcedit_path()
+    if not os.path.isfile(rcedit_path):
+        try:
+            # I don't use the latest release, so I can be sure that the executable behaves as expected
+            rcedit_download_url = "https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe"
+            urlretrieve(rcedit_download_url, rcedit_path)
+        except URLError as exc:
+            sys.exit("Could not download rcedit: {}".format(exc))
+
+
+def can_set_metadata(platform):
+    if platform.startswith("win32"):
+        return True
+    elif shutil.which("wine") != None:
+        return True
+    return False
+
+
+def get_exe_metadata(args, config):
+    # Default values listed here are from löve 11.3 (extra/windows/love.rc)
+
+    metadata = {}
+    if "windows" in config and "exe_metadata" in config["windows"]:
+        metadata = config["windows"]["exe_metadata"]
+
+    # Default value in löve: "LÖVE <version>"
+    if not "FileDescription" in metadata:
+        if args.version != None:
+            metadata["FileDescription"] = "{} {}".format(config["name"], args.version)
+        else:
+            metadata["FileDescription"] = config["name"]
+
+    # Default value is löve version
+    if not "FileVersion" in metadata:
+        if args.version != None:
+            metadata["FileVersion"] = args.version
+        else:
+            metadata["FileVersion"] = ""
+
+    # Default value is "LÖVE World Domination Inc."
+    if not "CompanyName" in metadata:
+        metadata["CompanyName"] = ""
+
+    # Default value is "Copyright © 2006-2020 LÖVE Development Team"
+    if not "LegalCopyright" in metadata:
+        metadata["LegalCopyright"] = ""
+
+    # Default value in löve: "LÖVE"
+    if not "ProductName" in metadata:
+        metadata["ProductName"] = config["name"]
+
+    # Default value is same as FileVersion's
+    if not "ProductVersion" in metadata:
+        metadata["ProductVersion"] = metadata["FileVersion"]
+
+    # löve also sets "InternalName" to ""
+
+    return metadata
+
+
+def get_rcedit_command():
+    rcedit_path = get_rcedit_path()
+    if sys.platform.startswith("win32"):
+        return [rcedit_path]
+    elif sys.platform.startswith("linux"):
+        return ["wine", rcedit_path]
+    else:
+        sys.exit("Can not execute rcedit on ths platform ({})".format(sys.platform))
+
+
+def set_exe_metadata(exe_path, metadata, icon_file):
+    args = get_rcedit_command()[:]
+    args.append(exe_path)
+    for k, v in metadata.items():
+        args.extend(["--set-version-string", k, v])
+
+    # I don't like how I delete temp_ico_path here
+    temp_ico_path = None
+    if icon_file != None:
+        if not os.path.isfile(icon_file):
+            sys.exit("Icon file does not exist '{}'".format(icon_file))
+        if icon_file.lower().endswith(".ico"):
+            args.extend(["--set-icon", icon_file])
+        else:
+            try:
+                img = Image.open(icon_file)
+                fd, temp_ico_path = tempfile.mkstemp(".ico")
+                os.close(fd)
+                img.save(temp_ico_path)
+                args.extend(["--set-icon", temp_ico_path])
+            except FileNotFoundError as exc:
+                sys.exit("Could not find icon file: {}".format(exc))
+            except UnidentifiedImageError as exc:
+                sys.exit("Could not read icon file: {}".format(exc))
+            except IOError as exc:
+                os.remove(temp_ico_path)
+                sys.exit("Could not convert icon to .ico: {}".format(exc))
+
+    res = subprocess.run(args)
+    if temp_ico_path:
+        os.remove(temp_ico_path)
+    if res.returncode != 0:
+        print("Could not set exe metadata", file=sys.stderr)
+        sys.exit(res.stderr)
+
+
 def build_windows(args, config, target, build_directory, love_file_path):
     if target in config and "love_binaries" in config[target]:
         love_binaries = config[target]["love_binaries"]
@@ -64,7 +178,6 @@ def build_windows(args, config, target, build_directory, love_file_path):
         if os.path.isdir(love_binaries):
             print("Love binaries already present in '{}'".format(love_binaries))
         else:
-
             download_love(config["love_version"], target)
 
     target_directory = os.path.join(build_directory, target)
@@ -76,17 +189,42 @@ def build_windows(args, config, target, build_directory, love_file_path):
     src = lambda x: os.path.join(love_binaries, x)
     dest = lambda x: os.path.join(temp_archive_dir, x)
     copy = lambda x: shutil.copyfile(src(x), dest(x))
-    copy("license.txt")
-    for f in os.listdir(love_binaries):
-        if f.endswith(".dll"):
-            copy(f)
+
+    if not os.path.isfile(src("love_orig.exe")):
+        # Copy metadata too, because we are making a backup
+        shutil.copy2(src("love.exe"), src("love_orig.exe"))
 
     target_exe_path = dest("{}.exe".format(config["name"]))
+
+    if can_set_metadata(sys.platform):
+        prepare_rcedit()
+
+        metadata = get_exe_metadata(args, config)
+
+        # Default value is "löve.exe" of course.
+        # This value is used to determine if an executable has been renamed
+        metadata["OriginalFilename"] = os.path.basename(target_exe_path)
+
+        set_exe_metadata(
+            src("love.exe"), metadata, config.get("icon_file", None),
+        )
+    else:
+        print(
+            "Cannot set exe metadata on this platform ({})".format(sys.platform),
+            file=sys.stderr,
+        )
+        print("If you are using a POSIX-compliant system, try installing WINE.")
+
     with open(target_exe_path, "wb") as fused:
         with open(src("love.exe"), "rb") as loveExe:
             with open(love_file_path, "rb") as loveZip:
                 fused.write(loveExe.read())
                 fused.write(loveZip.read())
+
+    copy("license.txt")
+    for f in os.listdir(love_binaries):
+        if f.endswith(".dll"):
+            copy(f)
 
     archive_files = {}
     if "archive_files" in config:

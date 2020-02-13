@@ -6,6 +6,7 @@ name = "Spectacular Shatter Buddies"
 love_version = "0.10.2" # guesses from conf.lua
 default_targets = ["win32", "win64", "osx", "appimage"] # pass otherwise
 build_directory = "builds" # makelove-build by default
+icon_file = "untracked/icon.png"
 
 love_files = [
 	"::git-ls-tree::",
@@ -39,6 +40,10 @@ postbuild = [
 	"butler_push.py", # upload to itch
 	"update_current_version.py", # update current version info on lobby server
 ]
+
+[windows]
+[windows.exe_metadata]
+LegalCopyright = "Copyright 2019 Joel Schumacher"
 
 [win32]
 #love_binaries = "/home/joel/Downloads/love-0.10.2-win32" # custom binary that has a changed icon

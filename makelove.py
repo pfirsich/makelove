@@ -170,8 +170,6 @@ def main():
     )
     args = parser.parse_args()
 
-    print(args.disabled_hooks)
-
     if not os.path.isfile("main.lua"):
         sys.exit(
             "There is no main.lua present in the current directory. Please execute makelove in a love game directory"
