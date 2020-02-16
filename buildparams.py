@@ -2,7 +2,7 @@ from collections import namedtuple
 
 import validators as val
 
-all_targets = ["win32", "win64", "linux", "appimage"]
+all_targets = ["win32", "win64", "appimage"]
 
 BuildParam = namedtuple("BuildParam", ["name", "validator", "help"])
 
