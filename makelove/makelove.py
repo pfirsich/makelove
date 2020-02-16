@@ -9,12 +9,12 @@ from email.utils import formatdate
 import zipfile
 import re
 
-from config import get_config, all_targets
-from hooks import execute_hook
-from filelist import FileList
-from jsonfile import JsonFile
-from windows import build_windows
-from linux import build_linux
+from .config import get_config, all_targets
+from .hooks import execute_hook
+from .filelist import FileList
+from .jsonfile import JsonFile
+from .windows import build_windows
+from .linux import build_linux
 
 all_hooks = ["prebuild", "postgamedir", "postbuild"]
 

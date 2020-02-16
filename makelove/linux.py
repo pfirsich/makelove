@@ -10,8 +10,8 @@ from collections import namedtuple
 from PIL import Image, UnidentifiedImageError
 import appdirs
 
-from util import tmpfile, parse_love_version, ask_yes_no
-from config import all_love_versions
+from .util import tmpfile, parse_love_version, ask_yes_no
+from .config import all_love_versions
 
 
 def get_appimagetool_path():

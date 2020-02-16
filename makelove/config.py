@@ -6,7 +6,7 @@ import re
 
 import toml
 
-import validators as val
+from . import validators as val
 
 all_targets = ["win32", "win64", "appimage"]
 

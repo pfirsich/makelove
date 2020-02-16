@@ -7,8 +7,8 @@ import os
 
 import toml
 
-from config import get_config
-from util import tmpfile
+from .config import get_config
+from .util import tmpfile
 
 
 def execute_hook(command, args, config):

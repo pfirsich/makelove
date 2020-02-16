@@ -10,7 +10,7 @@ import subprocess
 from PIL import Image, UnidentifiedImageError
 import appdirs
 
-from util import tmpfile
+from .util import tmpfile
 
 
 def common_prefix(l):
