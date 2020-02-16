@@ -17,7 +17,7 @@ import appdirs
 
 def common_prefix(l):
     # This is all functional and cool, but entirely unreadable.
-    # Just trust that it does what the function names suggests it does.
+    # Just trust that it does what the function name suggests it does.
     return max(
         l[0][:i]
         for i in range(len(min(l, key=len)))
@@ -67,6 +67,7 @@ def prepare_rcedit():
         try:
             # I don't use the latest release, so I can be sure that the executable behaves as expected
             rcedit_download_url = "https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe"
+            os.makedirs(os.path.dirname(rcedit_path), exist_ok=True)
             urlretrieve(rcedit_download_url, rcedit_path)
         except URLError as exc:
             sys.exit("Could not download rcedit: {}".format(exc))
@@ -164,8 +165,7 @@ def set_exe_metadata(exe_path, metadata, icon_file):
     if temp_ico_path:
         os.remove(temp_ico_path)
     if res.returncode != 0:
-        print("Could not set exe metadata", file=sys.stderr)
-        sys.exit(res.stderr)
+        sys.exit("Could not set exe metadata:\n" + res.stderr.decode("utf-8"))
 
 
 def build_windows(args, config, target, build_directory, love_file_path):
@@ -203,7 +203,8 @@ def build_windows(args, config, target, build_directory, love_file_path):
 
         # Default value is "löve.exe" of course.
         # This value is used to determine if an executable has been renamed
-        metadata["OriginalFilename"] = os.path.basename(target_exe_path)
+        if not "OriginalFilename" in metadata:
+            metadata["OriginalFilename"] = os.path.basename(target_exe_path)
 
         set_exe_metadata(
             src("love.exe"), metadata, config.get("icon_file", None),
@@ -231,8 +232,6 @@ def build_windows(args, config, target, build_directory, love_file_path):
         archive_files = config["archive_files"]
     if "windows" in config and "archive_files" in config["windows"]:
         archive_files.update(config["windows"]["archive_files"])
-    if target in config and "archive_files" in config[target]:
-        archive_files.update(config[target]["archive_files"])
 
     for k, v in archive_files.items():
         path = dest(v)
