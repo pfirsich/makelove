@@ -228,8 +228,8 @@ def main():
         print("Building target {}".format(target))
         if target == "win32" or target == "win64":
             build_windows(args, config, target, build_directory, love_file_path)
-        elif target == "linux" or target == "appimage":
-            build_linux(args, config, target, build_directory)
+        elif target == "appimage":
+            build_linux(args, config, target, build_directory, love_file_path)
 
     execute_hooks(args, config, "postbuild")
 
