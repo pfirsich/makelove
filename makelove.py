@@ -101,7 +101,7 @@ def execute_hooks(args, config, name):
         and not name in args.disabled_hooks
     ):
         for command in config["hooks"][name]:
-            new_config = execute_hook(command, config)
+            new_config = execute_hook(command, args, config)
             config.clear()
             config.update(new_config)
 
