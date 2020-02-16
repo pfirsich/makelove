@@ -7,6 +7,7 @@ import json
 import subprocess
 from email.utils import formatdate
 import zipfile
+import re
 
 from config import get_config
 from buildparams import all_targets
@@ -36,6 +37,15 @@ def files_in_dir(dir_path):
         for f in files:
             ret.append(os.path.join(root, f))
     return ret
+
+
+# Obviously this cannot bump everything, just bump the trailing number
+def bump_version(version):
+    m = re.search(r"\d+$", version)
+    if not m:
+        sys.exit("Could not bump version '{}'".format(version))
+    num = int(m.group(0)) + 1
+    return version[: m.start(0)] + str(num)
 
 
 def get_build_log_path(build_directory):
@@ -158,7 +168,7 @@ def main():
         "--disable-hook",
         dest="disabled_hooks",
         action="append",
-        choices=all_hooks,
+        choices=all_hooks + ["all"],
     )
     parser.add_argument(
         "--stomp",
@@ -171,8 +181,14 @@ def main():
         action="store_true",
         help="Display more information (files included in love archive)",
     )
-    # TODO: Restrict version name format somehow? A git refname?
+    # Restrict version name format somehow? A git refname?
     parser.add_argument("-v", "--version", help="Specify the version to be built.")
+    parser.add_argument(
+        "-b",
+        "--bump-version",
+        action="store_true",
+        help="Bump the previously built version",
+    )
     parser.add_argument(
         "targets",
         nargs="*",
@@ -189,8 +205,26 @@ def main():
 
     config = get_config(args)
 
-    build_directory = prepare_build_directory(args, config)
     build_log_path = get_build_log_path(config["build_directory"])
+
+    if args.bump_version:
+        if not os.path.isfile(build_log_path):
+            sys.exit(
+                "Could not find build log. It seems you have not built a versioned build before, so you can't pass --bump-version"
+            )
+        with open(build_log_path) as f:
+            build_log = json.load(f)
+            last_built_version = build_log[-1]["version"]
+        # Assigning to args.version here is a hack, but I want to get this thing done
+        args.version = bump_version(last_built_version)
+
+    if args.version != None:
+        print("Building version '{}'".format(args.version))
+
+    if "all" in args.disabled_hooks:
+        args.disabled_hooks = all_hooks
+
+    build_directory = prepare_build_directory(args, config)
 
     targets = args.targets
     if len(targets) == 0:

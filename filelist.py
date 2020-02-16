@@ -28,7 +28,7 @@ class FileList(object):
     def exclude(self, pattern):
         matches = set(fnmatch.filter(self.file_list, pattern))
         if len(matches) == 0:
-            print("Warning: Pattern '{}' does not match any files")
+            print("Warning: Pattern '{}' does not match any files".format(pattern))
         self.file_list -= matches
 
     def __iter__(self):
