@@ -149,7 +149,10 @@ def create_love_file(game_dir, love_file_path):
 
 def main():
     parser = argparse.ArgumentParser(prog="makelove")
-    parser.add_argument("--config")
+    parser.add_argument(
+        "--config",
+        help="Specify config file manually. If not specified 'makelove.toml' in the current working directory is used.",
+    )
     parser.add_argument(
         "-d",
         "--disable-hook",
@@ -157,10 +160,19 @@ def main():
         action="append",
         choices=all_hooks,
     )
-    parser.add_argument("--stomp", dest="overwrite_build", action="store_true")
-    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument(
+        "--stomp",
+        dest="overwrite_build",
+        action="store_true",
+        help="Specify this option to overwrite a version that was already built.",
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Display more information (files included in love archive)",
+    )
     # TODO: Restrict version name format somehow? A git refname?
-    parser.add_argument("-v", "--version")
+    parser.add_argument("-v", "--version", help="Specify the version to be built.")
     parser.add_argument(
         "targets",
         nargs="*",
@@ -184,6 +196,10 @@ def main():
     if len(targets) == 0:
         assert "default_targets" in config
         targets = config["default_targets"]
+        invalid_targets = [target for target in targets if not target in all_targets]
+        if invalid_targets:
+            sys.exit("Invalid targets: {}".format(", ".join(invalid_targets)))
+        print("Building default targets:", ", ".join(targets))
 
     if args.version != None:
         with JsonFile(build_log_path, indent=4) as build_log:
@@ -200,6 +216,7 @@ def main():
 
     love_directory = os.path.join(build_directory, "love")
     game_directory = os.path.join(love_directory, "game_directory")
+    print("Assembling game directory..")
     assemble_game_directory(args, config, game_directory)
 
     assert "name" in config
