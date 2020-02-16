@@ -1,0 +1,82 @@
+# If the name is not specified it will use the containing directorie's name
+# or if the current directory is a part of a git repository, it will use the name of
+# the directory containing the git repository.
+# Specify this!
+name = "Amazing Game"
+
+# This version is optional and will be read from conf.lua, if possible.
+# This is usually good enough and you do not need to specify this.
+love_version = "11.3"
+
+# The targets specified here are used if no targets are passed when makelove is invoked.
+default_targets = ["win32", "win64", "appimage"] # <- possible values for now
+
+# By default this is "makelove-build"
+build_directory = "bauwerke"
+
+# This icon file will be used for the executables and the appimage.
+# The executable requires an .ico or a file that can be read by Pillow (Python library).
+# The appimage requires a .png, an .svg or anything Pillow can load.
+icon_file = "icon.png"
+
+# These are the files included in the .love file.
+# The patterns are evaluated in the order they are specified. If they start with "-" they
+# remove matching files from the current set of files. If they start with "+" or neither
+# "+" nor "-", they will add matching files to the current set.
+# The patterns use Python's fnmatch (which does not set FNM_PATHNAME), so asterisk
+# will match slashes!
+# You can also specify a magic value called "::git-ls-tree::" which expands to all files
+# tracked by git.
+# The following is the default if the current working directory is in a git repository:
+love_files = [
+    "::git-ls-tree::",
+    "-*/.*", # don't include hidden files
+]
+# If the current directory is not in a git repository, love_files will use all files
+# in the current working directory except hidden files and the build directory.
+
+[archive_files]
+"path/in/libraries.txt" = "libraries.txt"
+"untracked/deps/licenses" = "licenses" # directory
+"untracked/.itch.toml" = ".itch.toml"
+
+[hooks]
+prebuild = [ # executed before anything is done
+	"generate_changelog.py", # generate from git history
+	"generate_builddata.py", # generates .lua file with commit, date, etc.
+]
+postbuild = [
+	"butler_push.py", # upload to itch
+	"update_current_version.py", # update current version info on lobby server
+]
+[hooks.parameters]
+# Put stuff here
+
+[windows]
+# archive_files = ["extra", "will be added"]
+[windows.exe_metadata]
+# FileDescription = "LÖVE <version>" - <name> <version> or <name>
+# FileVersion = "<löve version>" - <version> or ""
+# CompanyName = "LÖVE World Domination Inc." or ""
+# LegalCopyright = "Copyright © 2006-2020 LÖVE Development Team" or ""
+# ProductName = "LÖVE" or <name>
+# ProductVersion = FileVersion
+# OriginalFilename = "love.exe" will use the exe name, used to detect renames
+LegalCopyright = "Copyright 2019 Joel Schumacher"
+
+[win32]
+#love_binaries = "/home/joel/Downloads/love-0.10.2-win32" # custom binary that has a changed icon
+shared_libraries = [
+	"tools/enet2/enet2.dll",
+	"tools/libcurl.dll"
+]
+
+[linux]
+[linux.desktop_file_metadata]
+Comment="Scary game about finding teeth in odd places"
+Categories="Education;Science;" # Default is "Game;" (semicolon separator and terminator is mandatory)
+
+[appimage]
+# source_appimage = 
+# keep_appdir =
+# shared_libraries = []
