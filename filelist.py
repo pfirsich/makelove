@@ -13,7 +13,10 @@ class FileList(object):
                 self.full_list.append(os.path.join(root, fname))
 
     def include(self, pattern):
-        self.file_list |= set(fnmatch.filter(self.full_list, pattern))
+        matches = set(fnmatch.filter(self.full_list, pattern))
+        if len(matches) == 0:
+            print("Warning: Pattern '{}' does not match any files")
+        self.file_list |= matches
 
     def include_raw(self, item):
         path = os.path.join(".", os.path.normpath(item))
@@ -23,7 +26,10 @@ class FileList(object):
             raise FileNotFoundError
 
     def exclude(self, pattern):
-        self.file_list -= set(fnmatch.filter(self.file_list, pattern))
+        matches = set(fnmatch.filter(self.file_list, pattern))
+        if len(matches) == 0:
+            print("Warning: Pattern '{}' does not match any files")
+        self.file_list -= matches
 
     def __iter__(self):
         for path in sorted(self.file_list):
