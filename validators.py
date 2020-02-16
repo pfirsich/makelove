@@ -1,117 +1,123 @@
-class LoveVersion(object):
-    def __init__(self):
-        pass
+class Section(object):
+    def __init__(self, params):
+        self.params = params
 
-    def validate_str(self, s):
-        if not all(part.isdigit() for part in s.split(".")):
+    def validate(self, obj):
+        if not isinstance(obj, dict):
             raise ValueError
-        return s
-
-    def validate_obj(self, obj):
-        self.validate_str(obj)
+        for param in obj:
+            if param not in self.params:
+                raise ValueError("Unknown parameter '{}'".format(param))
+            try:
+                self.params[param].validate(obj[param])
+            except ValueError as exc:
+                if len(str(exc)) == 0:
+                    raise ValueError(
+                        "Invalid value for parameter '{}'. Expected: {}".format(
+                            param, self.params[param].description()
+                        )
+                    )
+                else:
+                    raise
         return obj
 
+    def description(self):
+        return "Section"
 
-class List(object):
-    def __init__(self, value_validator):
-        self.value_validator = value_validator
 
-    def validate_str(self, s):
-        return [self.value_validator.validate_str(part) for part in s.split(",")]
-
-    def validate_obj(self, obj):
-        if not isinstance(obj, list):
+class Bool(object):
+    def validate(self, obj):
+        if not isinstance(obj, bool):
             raise ValueError
-        for value in obj:
-            self.value_validator.validate_obj(value)
         return obj
+
+    def description(self):
+        return "Boolean"
+
+
+class String(object):
+    def validate(self, obj):
+        if not isinstance(obj, str):
+            raise ValueError
+        return obj
+
+    def description(self):
+        return "String"
+
+
+class Any(object):
+    def validate(self, obj):
+        return obj
+
+    def description(self):
+        return "Any value"
 
 
 class Choice(object):
     def __init__(self, *choices):
         self.choices = choices
 
-    def validate_str(self, s):
-        if not s in self.choices:
+    def validate(self, obj):
+        if not obj in self.choices:
             raise ValueError
-        return s
-
-    def validate_obj(self, obj):
-        self.validate_str(obj)
         return obj
+
+    def description(self):
+        return "One of [{}]".format(", ".join(self.choices))
 
 
 # This validator is mostly used for documentation, since on Linux
 # for example almost anything could be a path
 class Path(object):
-    def __init__(self):
-        pass
-
-    def validate_str(self, s):
-        return s
-
-    def validate_obj(self, obj):
+    def validate(self, obj):
         if not isinstance(obj, str):
             raise ValueError
         return obj
 
+    def description(self):
+        return "Path"
 
-class KeyValue(object):
-    def __init__(self, key_validator, value_validator):
-        self.key_validator = key_validator
+
+# Same as path
+class Command(object):
+    def validate(self, obj):
+        if not isinstance(obj, str):
+            raise ValueError
+        return obj
+
+    def description(self):
+        return "Command"
+
+
+class List(object):
+    def __init__(self, value_validator):
         self.value_validator = value_validator
 
-    def validate_str(self, s):
-        k, v = s.split("=")
-        return (
-            self.key_validator.validate_str(k),
-            self.value_validator.validate_str(v),
-        )
-
-    def validate_obj(self, obj):
-        if not isinstance(obj, tuple) or len(obj) != 2:
+    def validate(self, obj):
+        if not isinstance(obj, list):
             raise ValueError
-        self.key_validator.validate_obj(obj[0])
-        self.value_validator.validate_obj(obj[1])
+        for value in obj:
+            self.value_validator.validate(value)
         return obj
+
+    def description(self):
+        return "List({})".format(self.value_validator.description())
 
 
 class Dict(object):
     def __init__(self, key_validator, value_validator):
         self.key_validator = key_validator
         self.value_validator = value_validator
-        self.list_validator = List(KeyValue(key_validator, value_validator))
 
-    def validate_str(self, s):
-        return self.list_validator.validate_str(s)
-
-    def validate_obj(self, obj):
+    def validate(self, obj):
         if not isinstance(obj, dict):
             raise ValueError
-        self.list_validator.validate_obj(list(obj.items()))
-
-
-class Bool(object):
-    def __init__(self):
-        pass
-
-    def validate_str(self, s):
-        if not s in ["true", "false"]:
-            raise ValueError
-        return s == "true"
-
-    def validate_obj(self, obj):
-        if not isinstance(obj, bool):
-            raise ValueError
+        for k, v in obj.items():
+            self.key_validator.validate(k)
+            self.value_validator.validate(v)
         return obj
 
-
-class Any(object):
-    def __init__(self):
-        pass
-
-    def validate_str(self, s):
-        return s
-
-    def validate_obj(self, obj):
-        return obj
+    def description(self):
+        return "Dictionary(key = {}, value = {})".format(
+            self.key_validator.description(), self.value_validator.description()
+        )

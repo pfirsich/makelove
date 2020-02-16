@@ -11,7 +11,7 @@ from PIL import Image, UnidentifiedImageError
 import appdirs
 
 from util import tmpfile, parse_love_version, ask_yes_no
-from buildparams import all_love_versions
+from config import all_love_versions
 
 
 def get_appimagetool_path():

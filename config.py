@@ -6,7 +6,72 @@ import re
 
 import toml
 
-from buildparams import build_params, all_targets
+import validators as val
+
+all_targets = ["win32", "win64", "appimage"]
+
+all_love_versions = [
+    "11.3",
+    "11.2",
+    "11.1",
+    "11.0",
+    "0.10.2",
+    "0.10.1",
+    "0.10.0",
+    "0.9.2",
+    "0.9.1",
+    "0.9.0",
+    "0.8.0",
+    "0.7.2",
+    "0.7.1",
+    "0.7.0",
+    "0.6.2",
+    "0.6.1",
+    "0.6.0",
+    "0.5.0",
+    "0.4.0",
+    "0.3.2",
+    "0.3.1",
+    "0.3.0",
+    "0.2.1",
+    "0.2.0",
+    "0.1.1",
+]
+
+config_params = {
+    "name": val.String(),
+    "love_version": val.Choice(*all_love_versions),
+    "default_targets": val.List(val.Choice(*all_targets)),
+    "build_directory": val.Path(),
+    "icon_file": val.Path(),
+    "love_files": val.List(val.Path()),
+    "archive_files": val.Dict(val.Path(), val.Path()),
+    "hooks": val.Section(
+        {
+            "prebuild": val.List(val.Command()),
+            "postbuild": val.List(val.Command()),
+            "parameters": val.Dict(val.Any(), val.Any()),
+        }
+    ),
+    "windows": val.Section(
+        {
+            "exe_metadata": val.Dict(val.String(), val.String()),
+            "archive_files": val.Dict(val.Path(), val.Path()),
+        }
+    ),
+    "win32": val.Section(
+        {"love_binaries": val.Path(), "shared_libraries": val.List(val.Path())}
+    ),
+    "win64": val.Section(
+        {"love_binaries": val.Path(), "shared_libraries": val.List(val.Path())}
+    ),
+    "linux": val.Section(
+        {"desktop_file_metadata": val.Dict(val.String(), val.String())}
+    ),
+    "appimage": val.Section(
+        {"source_appimage": val.Path(), "shared_libraries": val.List(val.Path()),}
+    ),
+}
 
 
 def load_config_file(path):
@@ -59,13 +124,11 @@ def guess_love_version():
     return matches[0]
 
 
-def expand_wildcard(pattern):
-    # Be aware of .gitignore, .hgignore, .ignore and ignore hidden files
-    pass
-
-
 def validate_config(config):
-    pass
+    try:
+        val.Section(config_params).validate(config)
+    except ValueError as exc:
+        sys.exit("Could not parse config:\n{}".format(exc))
 
 
 def get_raw_config(args):

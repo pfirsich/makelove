@@ -9,8 +9,7 @@ from email.utils import formatdate
 import zipfile
 import re
 
-from config import get_config
-from buildparams import all_targets
+from config import get_config, all_targets
 from hooks import execute_hook
 from filelist import FileList
 from jsonfile import JsonFile
@@ -196,6 +195,11 @@ def main():
         default=[],
         help="Options: {}".format(", ".join(all_targets)),
     )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Only load config and check some arguments, then exit without doing anything. This is mostly useful development.",
+    )
     args = parser.parse_args()
 
     if not os.path.isfile("main.lua"):
@@ -223,6 +227,10 @@ def main():
 
     if "all" in args.disabled_hooks:
         args.disabled_hooks = all_hooks
+
+    if args.check:
+        print("Exiting because --check was passed.")
+        sys.exit(0)
 
     build_directory = prepare_build_directory(args, config)
 
