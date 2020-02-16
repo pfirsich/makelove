@@ -1,25 +1,17 @@
 import os
 import sys
-from urllib.request import urlretrieve, URLError
+from urllib.request import urlretrieve, urlopen, URLError
 import shutil
 import subprocess
 import re
+import json
+from collections import namedtuple
 
 from PIL import Image, UnidentifiedImageError
 import appdirs
 
-appimage_urls = {
-    "11.3": "https://bitbucket.org/rude/love/downloads/love-11.3-x86_64.AppImage",
-    "11.2": "https://bitbucket.org/rude/love/downloads/love-11.2-x86_64.AppImage",
-    "11.1": "https://bitbucket.org/rude/love/downloads/love-11.1-linux-x86_64.AppImage",
-    "11.0": "https://bitbucket.org/rude/love/downloads/love-11.0-linux-x86_64.AppImage",
-}
-
-
-def get_default_source_appimage_path(version):
-    return os.path.join(
-        appdirs.user_cache_dir("makelove"), "love-appimages", version, "love.AppImage"
-    )
+from util import tmpfile, parse_love_version, ask_yes_no
+from buildparams import all_love_versions
 
 
 def get_appimagetool_path():
@@ -27,14 +19,54 @@ def get_appimagetool_path():
 
 
 def download_love_appimage(version):
-    appimage_path = get_default_source_appimage_path(version)
-    url = appimage_urls[version]
+    latest_url = "https://api.github.com/repos/pfirsich/love-appimages/releases/latest"
     try:
-        os.makedirs(os.path.dirname(appimage_path), exist_ok=True)
-        urlretrieve(appimage_urls[version], appimage_path)
+        with urlopen(latest_url) as req:
+            data = json.loads(req.read().decode())
+    except Exception as exc:
+        sys.exit("Could not retrieve asset list: {}".format(exc))
+
+    Asset = namedtuple("Asset", ["name", "version", "download_url"])
+    appimages = []
+    for asset in data["assets"]:
+        m = re.match(r"love[-_]((?:\d+[_.])+\d+)[-_.].*", asset["name"])
+        if m:
+            appimage_version = parse_love_version(m.group(1))
+            appimages.append(
+                Asset(asset["name"], appimage_version, asset["browser_download_url"])
+            )
+    appimages.append(Asset("love_0_10_1.AppImage", [10, 1], "foo"))
+
+    parsed_version = parse_love_version(version)
+    same_major = [
+        appimg for appimg in appimages if appimg.version[0] == parsed_version[0]
+    ]
+    if len(same_major) == 0:
+        sys.exit("Did not find an available AppImage with matching major version")
+    same_major.sort(key=lambda x: x.version, reverse=True)
+    download_asset = same_major[0]
+    if download_asset.version != parsed_version:
+        print("Could not find AppImage with matching version.")
+        print(
+            "The most current AppImage with the same major version is for version {}".format(
+                ".".join(map(str, download_asset.version))
+            )
+        )
+        if not ask_yes_no("Use {} instead?".format(download_asset.name), default=True):
+            sys.exit("Aborting.")
+
+    try:
+        appimage_path = tmpfile(suffix=".AppImage")
+        print("Downloading {}..".format(download_asset.download_url))
+        urlretrieve(download_asset.download_url, appimage_path)
         os.chmod(appimage_path, 0o755)
-    except URLError as exc:
-        sys.exit("Could not download löve appimage from {}: {}".format(url, exc))
+        return appimage_path
+    except Exception as exc:
+        sys.exit(
+            "Could not download löve appimage from {}: {}".format(
+                download_asset.download_url, exc
+            )
+        )
 
 
 def get_appimagetool():
@@ -71,17 +103,8 @@ def build_linux(args, config, target, build_directory, love_file_path):
         source_appimage = config[target]["source_appimage"]
     else:
         assert "love_version" in config
-        love_version = config["love_version"]
-        if not love_version in appimage_urls.keys():
-            sys.exit(
-                "Currently there are no downloadable AppImages for löve {}".format(
-                    love_version
-                )
-            )
-        source_appimage = get_default_source_appimage_path(love_version)
-        if not os.path.isfile(source_appimage):
-            print("Downloading löve AppImage for version {}..".format(love_version))
-            download_love_appimage(love_version)
+        # Download it every time, in case it's updated (I might make them smaller)
+        source_appimage = download_love_appimage(config["love_version"])
 
     target_directory = os.path.join(build_directory, target)
     os.makedirs(target_directory)
@@ -99,30 +122,8 @@ def build_linux(args, config, target, build_directory, love_file_path):
     appdir = lambda x: os.path.join(appdir_path, x)
 
     # Modify AppDir
-    shutil.copy2(love_file_path, appdir_path)
+    shutil.copy2(love_file_path, appdir("usr/bin"))
 
-    # Modify entry script 'love' (and save under new name)
-    with open(appdir("love")) as f:
-        entry_script = f.read()
-    appimage_love_path = "${LOVE_LAUNCHER_LOCATION}/" + os.path.basename(love_file_path)
-    entry_script = replace_single(entry_script, "$@", appimage_love_path)
-    os.remove(appdir("love"))
-    with open(appdir(config["name"]), "w") as f:
-        f.write(entry_script)
-    os.chmod(appdir(config["name"]), 0o755)
-
-    # Patch wrapper-love
-    wrapper_path = appdir("usr/bin/wrapper-love")
-    with open(wrapper_path) as f:
-        wrapper_script = f.read()
-    wrapper_script = replace_single(
-        wrapper_script, "${APPIMAGE_DIR}/love", "${APPIMAGE_DIR}/" + config["name"]
-    )
-    with open(wrapper_path, "w") as f:
-        f.write(wrapper_script)
-    os.chmod(wrapper_path, 0o755)
-
-    # replace love.desktop with [name].desktop
     # Copy icon
     icon_file = config.get("icon_file", None)
     appdir_icon_path = appdir("{}.png".format(config["name"]))
@@ -142,11 +143,12 @@ def build_linux(args, config, target, build_directory, love_file_path):
                 sys.exit("Could not convert icon to .png: {}".format(exc))
     os.remove(appdir(".DirIcon"))
 
+    # replace love.desktop with [name].desktop
     os.remove(appdir("love.desktop"))
     desktop_file_fields = {
         "Type": "Application",
         "Name": config["name"],
-        "Exec": "wrapper-love %f",
+        "Exec": "wrapper-love %F",
         "Categories": "Game;",
         "Terminal": "false",
         "Icon": "love",
@@ -154,10 +156,18 @@ def build_linux(args, config, target, build_directory, love_file_path):
     if icon_file:
         desktop_file_fields["Icon"] = config["name"]
 
+    if "linux" in config and "desktop_file_metadata" in config["linux"]:
+        desktop_file_fields.update(config["linux"]["desktop_file_metadata"])
+
     with open(appdir("{}.desktop".format(config["name"])), "w") as f:
         f.write("[Desktop Entry]\n")
         for k, v in desktop_file_fields.items():
             f.write("{}={}\n".format(k, v))
+
+    # shared libraries
+    if target in config and "shared_libraries" in config[target]:
+        for f in config[target]["shared_libraries"]:
+            shutil.copy(f, appdir("usr/lib"))
 
     if "appimage" in config and config["appimage"].get("keep_appdir", False):
         print("Done. ('keep_appdir' is true)")

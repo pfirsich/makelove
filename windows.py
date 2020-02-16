@@ -1,6 +1,3 @@
-# rcedit builtin hook, check for `which wine` to do it on linux
-# rcedit needs ico file, but Pillow can create it
-# exiftool to print exe data
 import copy
 import sys
 import os
@@ -9,10 +6,11 @@ from zipfile import ZipFile
 from urllib.request import urlopen, urlretrieve, URLError
 from io import BytesIO
 import subprocess
-import tempfile
-from PIL import Image, UnidentifiedImageError
 
+from PIL import Image, UnidentifiedImageError
 import appdirs
+
+from util import tmpfile
 
 
 def common_prefix(l):
@@ -139,7 +137,6 @@ def set_exe_metadata(exe_path, metadata, icon_file):
     for k, v in metadata.items():
         args.extend(["--set-version-string", k, v])
 
-    # I don't like how I delete temp_ico_path here
     temp_ico_path = None
     if icon_file != None:
         if not os.path.isfile(icon_file):
@@ -149,8 +146,7 @@ def set_exe_metadata(exe_path, metadata, icon_file):
         else:
             try:
                 img = Image.open(icon_file)
-                fd, temp_ico_path = tempfile.mkstemp(".ico")
-                os.close(fd)
+                temp_ico_path = tmpfile(".ico")
                 img.save(temp_ico_path)
                 args.extend(["--set-icon", temp_ico_path])
             except FileNotFoundError as exc:
@@ -158,7 +154,6 @@ def set_exe_metadata(exe_path, metadata, icon_file):
             except UnidentifiedImageError as exc:
                 sys.exit("Could not read icon file: {}".format(exc))
             except IOError as exc:
-                os.remove(temp_ico_path)
                 sys.exit("Could not convert icon to .ico: {}".format(exc))
 
     res = subprocess.run(args)
@@ -229,7 +224,7 @@ def build_windows(args, config, target, build_directory, love_file_path):
 
     archive_files = {}
     if "archive_files" in config:
-        archive_files = config["archive_files"]
+        archive_files.update(config["archive_files"])
     if "windows" in config and "archive_files" in config["windows"]:
         archive_files.update(config["windows"]["archive_files"])
 
