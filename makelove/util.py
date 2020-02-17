@@ -49,3 +49,17 @@ def ask_yes_no(question, default=None):
                 return bool(strtobool(choice))
             except ValueError:
                 sys.stdout.write("Invalid answer.\n")
+
+
+def prompt(prompt_str, default=None):
+    default_str = ""
+    if default != None:
+        default_str = " [{}]".format(default)
+    while True:
+        sys.stdout.write(prompt_str + default_str + ": ")
+        s = input()
+        if s:
+            return s
+        else:
+            if default != None:
+                return default

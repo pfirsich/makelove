@@ -9,7 +9,7 @@ from email.utils import formatdate
 import zipfile
 import re
 
-from .config import get_config, all_targets
+from .config import get_config, all_targets, init_config_assistant
 from .hooks import execute_hook
 from .filelist import FileList
 from .jsonfile import JsonFile
@@ -159,6 +159,11 @@ def create_love_file(game_dir, love_file_path):
 def main():
     parser = argparse.ArgumentParser(prog="makelove")
     parser.add_argument(
+        "--init",
+        action="store_true",
+        help="Start assistant to create a new configuration.",
+    )
+    parser.add_argument(
         "--config",
         help="Specify config file manually. If not specified 'makelove.toml' in the current working directory is used.",
     )
@@ -189,18 +194,22 @@ def main():
         help="Bump the previously built version",
     )
     parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Only load config and check some arguments, then exit without doing anything. This is mostly useful development.",
+    )
+    parser.add_argument(
         "targets",
         nargs="*",
         type=_choices(all_targets),
         default=[],
         help="Options: {}".format(", ".join(all_targets)),
     )
-    parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Only load config and check some arguments, then exit without doing anything. This is mostly useful development.",
-    )
     args = parser.parse_args()
+
+    if args.init:
+        init_config_assistant()
+        sys.exit(0)
 
     if not os.path.isfile("main.lua"):
         sys.exit(

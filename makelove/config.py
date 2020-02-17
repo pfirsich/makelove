@@ -7,6 +7,9 @@ import re
 import toml
 
 from . import validators as val
+from .util import prompt
+
+default_config_name = "makelove.toml"
 
 all_targets = ["win32", "win64", "appimage"]
 
@@ -144,6 +147,20 @@ def guess_love_version():
     return matches[0]
 
 
+def get_default_love_files(build_directory):
+    if is_inside_git_repo():
+        return [
+            "::git-ls-tree::",
+            "-*/.*",
+        ]
+    else:
+        return [
+            "+*",
+            "-*/.*",
+            "-./{}/*".format(build_directory),
+        ]
+
+
 def validate_config(config):
     try:
         val.Section(config_params).validate(config)
@@ -158,10 +175,9 @@ def get_raw_config(args):
         print("Loading config file '{}'".format(args.config))
         return load_config_file(args.config)
     else:
-        default_config_path = "makelove.toml"
-        if os.path.isfile(default_config_path):
-            print("Loading config from default path '{}'".format(default_config_path))
-            return load_config_file(default_config_path)
+        if os.path.isfile(default_config_name):
+            print("Loading config from default path '{}'".format(default_config_name))
+            return load_config_file(default_config_name)
         else:
             print("No config file found. Using default config.")
             return {}
@@ -186,17 +202,44 @@ def get_config(args):
         config["build_directory"] = "makelove-build"
         print("Using default build directory '{}'".format(config["build_directory"]))
     if not "love_files" in config:
-        if is_inside_git_repo():
-            config["love_files"] = [
-                "::git-ls-tree::",
-                "-*/.*",
-            ]
-        else:
-            config["love_files"] = [
-                "+*",
-                "-*/.*",
-                "-./{}/*".format(config["build_directory"]),
-            ]
+        config["love_files"] = get_default_love_files(config["build_directory"])
         print("Using default love_files patterns: {}".format(config["love_files"]))
     validate_config(config)
     return config
+
+
+init_config_template = """name = {name}
+default_targets = [{default_targets}]
+build_directory = {build_directory}
+
+love_files = [
+{love_files}
+]
+"""
+
+
+def init_config_assistant():
+    if os.path.isfile(default_config_name):
+        sys.exit("{} already exists in this directory".format(default_config_name))
+
+    if not is_inside_git_repo():
+        print("If you plan on using git, please initialize the repository first!")
+
+    name = prompt("Project name")
+    default_targets = get_default_targets()
+    build_directory = prompt("Build directory", "makelove-build")
+    love_files = get_default_love_files(build_directory)
+
+    quote = lambda x: '"' + x.replace('"', '\\"') + '"'
+    config = init_config_template.format(
+        name=quote(name),
+        default_targets=", ".join(map(quote, default_targets)),
+        build_directory=quote(build_directory),
+        love_files="\n".join("    " + quote(pat) + "," for pat in love_files),
+    )
+
+    with open(default_config_name, "w") as f:
+        f.write(config)
+    print("Configuration written to {}".format(default_config_name))
+    print("You should probably adjust love_files before you build.")
+
