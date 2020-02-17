@@ -55,51 +55,47 @@ def get_build_log_path(build_directory):
 def prepare_build_directory(args, config):
     assert "build_directory" in config
     build_directory = config["build_directory"]
-    if os.path.exists(build_directory):
-        if os.path.isfile(get_build_log_path(build_directory)):
-            # We are using versioned builds
-            if args.version == None and not args.overwrite_build:
-                sys.exit(
-                    "You have made versioned builds in the past. Please pass a version name or pass --stomp to delete the whole build directory."
-                )
+    versioned_build = args.version != None
+    made_versioned_builds = os.path.exists(build_directory) and os.path.isfile(
+        get_build_log_path(build_directory)
+    )
 
-    if args.version != None:
-        version_directory = os.path.join(build_directory, args.version)
-        if os.path.exists(version_directory):
-            if os.path.isdir(version_directory):
-                if args.overwrite_build:
-                    print("Version directory already exists. Deleting..")
-                    shutil.rmtree(version_directory)
-                else:
-                    sys.exit(
-                        "Version directory already exists. Remove it manually first or pass --stomp to overwrite it"
-                    )
-            else:
-                sys.exit(
-                    "Version directory can not be created, because a non-directory object with the same name already exists"
-                )
+    if made_versioned_builds and not versioned_build:
+        if args.overwrite_build:
+            shutil.rmtree(build_directory)
+        else:
+            sys.exit(
+                "You have made a versioned build in the past. Please pass a version name or pass --stomp to delete the whole build directory."
+            )
+
+    if versioned_build:
         # Pretend the build directory is the version directory
         # I think this is somewhat hacky, but also nice at the same time
-        build_directory = version_directory
+        build_directory = os.path.join(build_directory, args.version)
+
+    if os.path.exists(build_directory):
+        if not os.path.isdir(build_directory):
+            sys.exit(
+                "Build directory can not be created, because a non-directory object with the same name already exists"
+            )
+        # If no version is specified, overwrite by default
+        built_targets = os.listdir(build_directory)
+        building_target_again = any(target in built_targets for target in args.targets)
+        # If the targets being built have not been built before, it should be fine to not do anything
+        if building_target_again:
+            if versioned_build:
+                if args.overwrite_build:
+                    print("Version directory already exists. Deleting..")
+                    shutil.rmtree(build_directory)
+                else:
+                    sys.exit(
+                        "Version directory/target already exists. Remove it manually first or pass --stomp to overwrite it"
+                    )
+            else:
+                print("Clearing build directory")
+                shutil.rmtree(build_directory)
     else:
-        if os.path.exists(build_directory):
-            if not os.path.isdir(build_directory):
-                sys.exit(
-                    "Build directory can not be created, because a non-directory object with the same name already exists"
-                )
-            # If no version is specified, overwrite by default
-            print("Clearing build directory")
-            shutil.rmtree(build_directory)
-
-    # Make sure we start with a clean build directory
-    assert not os.path.exists(build_directory)
-    try:
         os.makedirs(build_directory)
-    except OSError:
-        sys.exit(
-            "Could not create build directory. Did you pass a version name that is not a valid file name on your OS?"
-        )
-
     return build_directory
 
 
@@ -116,6 +112,8 @@ def execute_hooks(args, config, name):
 
 
 def assemble_game_directory(args, config, game_directory):
+    if os.path.isdir(game_directory):
+        shutil.rmtree(game_directory)
     os.makedirs(game_directory)
     file_list = FileList(".")
     for rule in config["love_files"]:
@@ -170,6 +168,7 @@ def main():
     parser.add_argument(
         "-d",
         "--disable-hook",
+        default=[],
         dest="disabled_hooks",
         action="append",
         choices=all_hooks + ["all"],
@@ -247,9 +246,6 @@ def main():
     if len(targets) == 0:
         assert "default_targets" in config
         targets = config["default_targets"]
-        invalid_targets = [target for target in targets if not target in all_targets]
-        if invalid_targets:
-            sys.exit("Invalid targets: {}".format(", ".join(invalid_targets)))
         print("Building default targets:", ", ".join(targets))
 
     if args.version != None:
@@ -266,19 +262,21 @@ def main():
     execute_hooks(args, config, "prebuild")
 
     love_directory = os.path.join(build_directory, "love")
-    game_directory = os.path.join(love_directory, "game_directory")
-    print("Assembling game directory..")
-    assemble_game_directory(args, config, game_directory)
-
-    assert "name" in config
     love_file_path = os.path.join(love_directory, "{}.love".format(config["name"]))
-    create_love_file(game_directory, love_file_path)
-    print("Created {}".format(love_file_path))
+    game_directory = os.path.join(love_directory, "game_directory")
 
-    if config.get("keep_game_directory", False):
-        print("Keeping game directory because 'keep_game_directory' is true")
-    else:
-        shutil.rmtree(game_directory)
+    # Check for existence for resumable builds
+    if not os.path.isfile(love_file_path):
+        print("Assembling game directory..")
+        assemble_game_directory(args, config, game_directory)
+
+        create_love_file(game_directory, love_file_path)
+        print("Created {}".format(love_file_path))
+
+        if config.get("keep_game_directory", False):
+            print("Keeping game directory because 'keep_game_directory' is true")
+        else:
+            shutil.rmtree(game_directory)
 
     for target in targets:
         print(">> Building target {}".format(target))
