@@ -11,7 +11,7 @@ from PIL import Image, UnidentifiedImageError
 import appdirs
 
 from .util import tmpfile, parse_love_version, ask_yes_no
-from .config import all_love_versions
+from .config import all_love_versions, should_build_artifact
 
 
 def get_appimagetool_path():
@@ -169,15 +169,20 @@ def build_linux(args, config, target, build_directory, love_file_path):
         for f in config[target]["shared_libraries"]:
             shutil.copy(f, appdir("usr/lib"))
 
-    if "appimage" in config and config["appimage"].get("keep_appdir", False):
-        print("Done. ('keep_appdir' is true)")
-        return
+    if should_build_artifact(config, target, "appimage", True):
+        print("Creating new AppImage..")
+        appimage_path = os.path.join(
+            target_directory, "{}.AppImage".format(config["name"])
+        )
+        ret = subprocess.run(
+            [get_appimagetool(), appdir_path, appimage_path], capture_output=True
+        )
+        if ret.returncode != 0:
+            sys.exit("Could not create appimage: {}".format(ret.stderr.decode("utf-8")))
+        print("Created {}".format(appimage_path))
 
-    print("Creating new AppImage..")
-    appimage_path = os.path.join(target_directory, "{}.AppImage".format(config["name"]))
-    ret = subprocess.run(
-        [get_appimagetool(), appdir_path, appimage_path], capture_output=True
-    )
-    if ret.returncode != 0:
-        sys.exit("Could not create appimage: {}".format(ret.stderr.decode("utf-8")))
-    print("Created {}".format(appimage_path))
+    if should_build_artifact(config, target, "appdir", False):
+        os.rename(appdir_path, os.path.join(target_directory, "AppDir"))
+    else:
+        print("Removing AppDir..")
+        shutil.rmtree(appdir_path)

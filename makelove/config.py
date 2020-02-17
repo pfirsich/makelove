@@ -45,6 +45,7 @@ config_params = {
     "build_directory": val.Path(),
     "icon_file": val.Path(),
     "love_files": val.List(val.Path()),
+    "keep_game_directory": val.Bool(),
     "archive_files": val.Dict(val.Path(), val.Path()),
     "hooks": val.Section(
         {
@@ -60,18 +61,37 @@ config_params = {
         }
     ),
     "win32": val.Section(
-        {"love_binaries": val.Path(), "shared_libraries": val.List(val.Path())}
+        {
+            "love_binaries": val.Path(),
+            "shared_libraries": val.List(val.Path()),
+            "artifacts": val.ValueOrList(val.Choice("directory", "archive")),
+        }
     ),
     "win64": val.Section(
-        {"love_binaries": val.Path(), "shared_libraries": val.List(val.Path())}
+        {
+            "love_binaries": val.Path(),
+            "shared_libraries": val.List(val.Path()),
+            "artifacts": val.ValueOrList(val.Choice("directory", "archive")),
+        }
     ),
     "linux": val.Section(
         {"desktop_file_metadata": val.Dict(val.String(), val.String())}
     ),
     "appimage": val.Section(
-        {"source_appimage": val.Path(), "shared_libraries": val.List(val.Path()),}
+        {
+            "source_appimage": val.Path(),
+            "shared_libraries": val.List(val.Path()),
+            "artifacts": val.ValueOrList(val.Choice("appdir", "appimage")),
+        }
     ),
 }
+
+
+def should_build_artifact(config, target, artifact, default):
+    if not target in config or not "artifacts" in config[target]:
+        return default
+    if artifact in config[target]["artifacts"]:
+        return True
 
 
 def load_config_file(path):

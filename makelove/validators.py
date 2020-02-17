@@ -121,3 +121,26 @@ class Dict(object):
         return "Dictionary(key = {}, value = {})".format(
             self.key_validator.description(), self.value_validator.description()
         )
+
+
+class Option(object):
+    def __init__(self, *option_validators):
+        self.option_validators = option_validators
+
+    def validate(self, obj):
+        for option in self.option_validators:
+            try:
+                option.validate(obj)
+                return obj
+            except ValueError:
+                pass
+        raise ValueError
+
+    def description(self):
+        return "Option({})".format(
+            ", ".join(option.description() for option in self.option_validators)
+        )
+
+
+def ValueOrList(value_validator):
+    return Option(value_validator, List(value_validator))

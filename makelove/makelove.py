@@ -266,12 +266,18 @@ def main():
     create_love_file(game_directory, love_file_path)
     print("Created {}".format(love_file_path))
 
+    if config.get("keep_game_directory", False):
+        print("Keeping game directory because 'keep_game_directory' is true")
+    else:
+        shutil.rmtree(game_directory)
+
     for target in targets:
-        print("Building target {}".format(target))
+        print(">> Building target {}".format(target))
         if target == "win32" or target == "win64":
             build_windows(args, config, target, build_directory, love_file_path)
         elif target == "appimage":
             build_linux(args, config, target, build_directory, love_file_path)
+        print("Target {} complete".format(target))
 
     execute_hooks(args, config, "postbuild")
 

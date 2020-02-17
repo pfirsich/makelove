@@ -11,6 +11,7 @@ from PIL import Image, UnidentifiedImageError
 import appdirs
 
 from .util import tmpfile
+from .config import should_build_artifact
 
 
 def common_prefix(l):
@@ -242,4 +243,13 @@ def build_windows(args, config, target, build_directory, love_file_path):
         for f in config[target]["shared_libraries"]:
             shutil.copyfile(f, dest(os.path.basename(f)))
 
-    print("Target {} complete".format(target))
+    if should_build_artifact(config, target, "archive", True):
+        archive_path = os.path.join(
+            target_directory, "{}-{}.zip".format(config["name"], target)
+        )
+        shutil.make_archive(archive_path, "zip", temp_archive_dir)
+
+    if should_build_artifact(config, target, "directory", False):
+        os.rename(temp_archive_dir, os.path.join(target_directory, config["name"]))
+    else:
+        shutil.rmtree(temp_archive_dir)

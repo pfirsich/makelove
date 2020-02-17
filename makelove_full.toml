@@ -35,6 +35,8 @@ love_files = [
 # If the current directory is not in a git repository, love_files will use all files
 # in the current working directory except hidden files and the build directory.
 
+keep_game_directory = false
+
 [archive_files]
 "path/in/libraries.txt" = "libraries.txt"
 "untracked/deps/licenses" = "licenses" # directory
@@ -70,6 +72,9 @@ shared_libraries = [
 	"tools/enet2/enet2.dll",
 	"tools/libcurl.dll"
 ]
+artifacts = "archive"
+
+# same for win64
 
 [linux]
 [linux.desktop_file_metadata]
@@ -77,6 +82,6 @@ Comment="Scary game about finding teeth in odd places"
 Categories="Education;Science;" # Default is "Game;" (semicolon separator and terminator is mandatory)
 
 [appimage]
-# source_appimage = 
-# keep_appdir =
-# shared_libraries = []
+source_appimage = ""
+shared_libraries = []
+artifacts = "appimage"
