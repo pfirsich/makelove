@@ -16,7 +16,7 @@ from .jsonfile import JsonFile
 from .windows import build_windows
 from .linux import build_linux
 
-all_hooks = ["prebuild", "postgamedir", "postbuild"]
+all_hooks = ["prebuild", "postbuild"]
 
 # Sadly argparse cannot handle nargs="*" and choices and will error if not at least one argument is provided
 def _choices(values):
@@ -190,7 +190,7 @@ def main():
         "-b",
         "--bump-version",
         action="store_true",
-        help="Bump the previously built version",
+        help="Bump the previously built version and use it as --version.",
     )
     parser.add_argument(
         "--check",
