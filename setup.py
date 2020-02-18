@@ -19,6 +19,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.7",
-    install_requires=["Pillow", "appdirs", "toml"],
+    install_requires=["Pillow>=7.0", "appdirs>=1.4.3", "toml>=0.10"],
     entry_points={"console_scripts": ["makelove=makelove.makelove:main"],},
 )
