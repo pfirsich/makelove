@@ -1,23 +1,10 @@
-# If the name is not specified it will use the containing directorie's name
+# vvvvvvvvvvvv You should probably specify the following values vvvvvvvvvvvv
+
+# If the name is not specified it will use the containing directory's name
 # or if the current directory is a part of a git repository, it will use the name of
 # the directory containing the git repository.
 # Specify this!
 name = "Amazing Game"
-
-# This version is optional and will be read from conf.lua, if possible.
-# This is usually good enough and you do not need to specify this.
-love_version = "11.3"
-
-# The targets specified here are used if no targets are passed when makelove is invoked.
-default_targets = ["win32", "win64", "appimage"] # <- possible values for now
-
-# By default this is "makelove-build"
-build_directory = "bauwerke"
-
-# This icon file will be used for the executables and the appimage.
-# The executable requires an .ico or a file that can be read by Pillow (Python library).
-# The appimage requires a .png, an .svg or anything Pillow can load.
-icon_file = "icon.png"
 
 # These are the files included in the .love file.
 # The patterns are evaluated in the order they are specified. If they start with "-" they
@@ -35,53 +22,110 @@ love_files = [
 # If the current directory is not in a git repository, love_files will use all files
 # in the current working directory except hidden files and the build directory.
 
+# vvvvvvvvvvvv You may want to specify these too vvvvvvvvvvvv
+
+# This version is optional and will be read from conf.lua, if possible.
+# This is usually good enough and you do not need to specify this.
+love_version = "11.3"
+
+# The targets specified here are used if no targets are passed when makelove is invoked.
+# If you are on Linux, the default value is ["win32", "win64", "appimage"]
+# If you are on another OS, the default value is ["win32", "win64"]
+default_targets = ["win32", "win64", "appimage"] # <- possible values for now
+
+# By default this is "makelove-build"
+build_directory = "bauwerke"
+
+# This icon file will be used for the executables and the appimage.
+# The executable requires an .ico or a file that can be read by Pillow (Python library).
+# The appimage requires a .png, an .svg or anything Pillow can load.
+icon_file = "icon.png"
+
+# After the game directory file have been assembled and the .love file has been created
+# the temporary game directory will be deleted, unless this parameter is true
 keep_game_directory = false
 
+# This specifies the files to be included in the archives generated for windows builds
+# The key is the local source path and the value is the path relative to the archive root
+# You may specify files or directories
 [archive_files]
-"path/in/libraries.txt" = "libraries.txt"
-"untracked/deps/licenses" = "licenses" # directory
-"untracked/.itch.toml" = ".itch.toml"
+"foo/bar/somefile.txt" = "somefile.txt"
+"baz/baz/licenses" = "licenses" # directory
+".itch.toml" = ".itch.toml"
 
 [hooks]
-prebuild = [ # executed before anything is done
-	"generate_changelog.py", # generate from git history
-	"generate_builddata.py", # generates .lua file with commit, date, etc.
+# Both hooks are a list of commands to be executed. They use the default shell.
+# For more information, see the README.md
+prebuild = [
+	"generate_changelog.py",
+	"generate_builddata.py",
 ]
 postbuild = [
-	"butler_push.py", # upload to itch
-	"update_current_version.py", # update current version info on lobby server
+	"butler_push.py", 
 ]
+
 [hooks.parameters]
-# Put stuff here
+# This section will not be checked when the config is validated and may contain
+# anything. It is intended as a place for configuration for your hooks.
 
 [windows]
-# archive_files = ["extra", "will be added"]
+# This is the same as archive_files at the top level, but will be added to the archive additionally
+[windows.archive_files]
+
+# Exe metadata is specified as a version string (key) and it's value
+# The values shown here are the ones set by makelove by default (you can overwrite them here)
+# and the values in the comments are the original values in love.exe
+# If you are not doing a versioned build, {version} is empty.
 [windows.exe_metadata]
-# FileDescription = "LÖVE <version>" - <name> <version> or <name>
-# FileVersion = "<löve version>" - <version> or ""
-# CompanyName = "LÖVE World Domination Inc." or ""
-# LegalCopyright = "Copyright © 2006-2020 LÖVE Development Team" or ""
-# ProductName = "LÖVE" or <name>
-# ProductVersion = FileVersion
-# OriginalFilename = "love.exe" will use the exe name, used to detect renames
-LegalCopyright = "Copyright 2019 Joel Schumacher"
+FileDescription = "{name} {version}" # "LÖVE {löve version}"
+FileVersion = "{version}" # "{löve version}"
+CompanyName = "" # "LÖVE World Domination Inc."
+LegalCopyright = "" # "Copyright © 2006-2020 LÖVE Development Team" or ""
+ProductName = "{name}" # "LÖVE"
+ProductVersion = "<same as FileVersion>"
+OriginalFilename = "<name of the generated .exe>" # "love.exe"
 
 [win32]
-#love_binaries = "/home/joel/Downloads/love-0.10.2-win32" # custom binary that has a changed icon
+# This points to a directory containing an unpacked löve zip, just like official
+# ones distributed on the löve website (containing an .exe, a bunch of .dlls).
+love_binaries = "/home/joel/Downloads/love-0.10.2-win32"
+
+# This is a list of local paths to .dlls that are either loaded as Lua modules of via FFI
+# and that need to be included in the archive.
 shared_libraries = [
-	"tools/enet2/enet2.dll",
-	"tools/libcurl.dll"
+	"enet2/enet2.dll",
+	"libcurl.dll"
 ]
+
+# This is either a single string value or a list of the possible values "archive" and "directory"
+# If "archive" is specified a .zip file containing the fused exe, the archive files,
+# .dlls and everything else is produced.
+# If "directory" is specified a directory with the same contents is created.
+# The default value of only "archive" implies that the directory will be deleted 
+# after the .zip has been built.
 artifacts = "archive"
 
-# same for win64
+# The values above for the target win32 can also be set for the win64 target
 
 [linux]
+# These values are included in the .desktop file
 [linux.desktop_file_metadata]
 Comment="Scary game about finding teeth in odd places"
-Categories="Education;Science;" # Default is "Game;" (semicolon separator and terminator is mandatory)
+Categories="Education;Science;" # Default is "Game;" (semicolon is separator and terminator)
 
 [appimage]
-source_appimage = ""
-shared_libraries = []
-artifacts = "appimage"
+# makelove will turn a löve AppImage into an AppImage of your game as described in the
+# https://github.com/pfirsich/love-appimages README
+# If a custom AppImage is to be used, you can specify it here
+source_appimage = "love_custom.AppImage"
+
+# As with windows, this is a list of .so files to include in the AppImage
+shared_libraries = [
+	"enet2/enet2.so",
+	"/lib/x86_64-linux-gnu/libcurl.so",
+]
+
+# See win32.artifacts and win64.artifacts.
+# for appimage the possible values are: "appimage" and "appdir",
+# where "appdir" is the AppDir the AppImage is generated from.
+artifacts = "appimage" # default is to delete the AppDir

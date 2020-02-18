@@ -3,18 +3,17 @@
 A packaging tool for [löve](https://love2d.org) games
 
 ## Features
-
-- Build fused win32 and win64 löve binaries (including handling of .exe metadata and icon, but only on Windows & WINE!)
-- Build [AppImage](https://appimage.org/)s using the AppImages from [love-appimages](pfirsich/love-appimages) (This is feature is only supported on Linux and WSL2. WSL does not support AppImages for a lack of FUSE support)
-- Proper handling of shared libraries (both Lua modules and FFI)!
-- Packaging of those binaries in archives, including extra files
-- Versioned builds
-- Control and customization along the way:
-  - Configure which targets to build
-  - Which files to include in the .love or the archive with a list of include/exclude patterns
-  - Which löve binaries or AppImage to use as the base
-  - Which artifacts to generate/keep
-  - pre- and postbuild hooks that are able to change the configuration on the fly. For example you can decide dynamically which files to include in the .love (e.g. through parsing asset lists), inject build metadata or just to upload your build automatically afterwards (e.g. via butler to [itch.io](https://itch.io)))
+* Build fused win32 and win64 löve binaries (including handling of .exe metadata and icon, but only on Windows or with Wine!)
+* Build [AppImages](https://appimage.org/) using the AppImages from [love-appimages](pfirsich/love-appimages) (This is feature is only supported on Linux and WSL2. WSL does not support AppImages for a lack of FUSE support)
+* Proper handling of shared libraries (both Lua modules and FFI)!
+* Packaging of those binaries in archives, including extra files
+* Versioned builds
+* Control and customization along the way:
+    - Configure which targets to build
+    - Which files to include in the .love or the archive with a list of include/exclude patterns
+    - Which löve binaries or AppImage to use as the base
+    - Which artifacts to generate or keep
+    - pre- and postbuild hooks that are able to change the configuration on the fly. For example you can decide dynamically which files to include in the .love (e.g. through parsing asset lists), inject build metadata or just to upload your build automatically afterwards (e.g. via butler to [itch.io](https://itch.io)))
 
 ### Planned
 
@@ -58,6 +57,8 @@ There are a number of arguments you can specify to customize the build (e.g. to 
 makelove --help
 ```
 
-// link makelove_full.toml
-// more examples
-// paste helptext?
+## Configuration
+
+All possible configuration values are shown and explained in [makelove_full.toml](makelove_full.toml) (not a valid makelove configuration).
+
+Hooks are capable of rewriting the config for a build. For more information on configuring hooks, see [hooks.md](hooks.md) (coming soon!)
