@@ -164,7 +164,9 @@ def main():
         help="Display more information (files included in love archive)",
     )
     # Restrict version name format somehow? A git refname?
-    parser.add_argument("-v", "--version", help="Specify the version to be built.")
+    parser.add_argument(
+        "-n", "--version-name", help="Specify the name of the version to be built."
+    )
     parser.add_argument(
         "--check",
         action="store_true",
