@@ -73,7 +73,7 @@ def prepare_rcedit():
 
 
 def can_set_metadata(platform):
-    if platform.startswith("win32"):
+    if platform.startswith("win"):
         return True
     elif shutil.which("wine") != None:
         return True
@@ -164,7 +164,7 @@ def set_exe_metadata(exe_path, metadata, icon_file):
         sys.exit("Could not set exe metadata:\n" + res.stderr.decode("utf-8"))
 
 
-def build_windows(args, config, target, build_directory, love_file_path):
+def build_windows(args, config, target, target_directory, love_file_path):
     if target in config and "love_binaries" in config[target]:
         love_binaries = config[target]["love_binaries"]
     else:
@@ -175,9 +175,6 @@ def build_windows(args, config, target, build_directory, love_file_path):
             print("Love binaries already present in '{}'".format(love_binaries))
         else:
             download_love(config["love_version"], target)
-
-    target_directory = os.path.join(build_directory, target)
-    os.makedirs(target_directory)
 
     temp_archive_dir = os.path.join(target_directory, "archive_temp")
     os.makedirs(temp_archive_dir)

@@ -35,7 +35,6 @@ def download_love_appimage(version):
             appimages.append(
                 Asset(asset["name"], appimage_version, asset["browser_download_url"])
             )
-    appimages.append(Asset("love_0_10_1.AppImage", [10, 1], "foo"))
 
     parsed_version = parse_love_version(version)
     same_major = [
@@ -98,16 +97,13 @@ def replace_single(string, pat, subst):
         return string.replace(pat, subst)
 
 
-def build_linux(args, config, target, build_directory, love_file_path):
+def build_linux(args, config, target, target_directory, love_file_path):
     if target in config and "source_appimage" in config[target]:
         source_appimage = config[target]["source_appimage"]
     else:
         assert "love_version" in config
         # Download it every time, in case it's updated (I might make them smaller)
         source_appimage = download_love_appimage(config["love_version"])
-
-    target_directory = os.path.join(build_directory, target)
-    os.makedirs(target_directory)
 
     print("Extracting source AppImage '{}'..".format(source_appimage))
     ret = subprocess.run(

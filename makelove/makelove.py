@@ -51,49 +51,28 @@ def get_build_log_path(build_directory):
     return os.path.join(build_directory, ".makelove-buildlog")
 
 
-# Why is this so much code?
 def prepare_build_directory(args, config):
     assert "build_directory" in config
     build_directory = config["build_directory"]
     versioned_build = args.version != None
-    made_versioned_builds = os.path.exists(build_directory) and os.path.isfile(
-        get_build_log_path(build_directory)
-    )
-
-    if made_versioned_builds and not versioned_build:
-        if args.overwrite_build:
-            shutil.rmtree(build_directory)
-        else:
-            sys.exit(
-                "You have made a versioned build in the past. Please pass a version name or pass --stomp to delete the whole build directory."
-            )
 
     if versioned_build:
         # Pretend the build directory is the version directory
         # I think this is somewhat hacky, but also nice at the same time
         build_directory = os.path.join(build_directory, args.version)
 
-    if os.path.exists(build_directory):
-        if not os.path.isdir(build_directory):
-            sys.exit(
-                "Build directory can not be created, because a non-directory object with the same name already exists"
-            )
+    if os.path.isdir(build_directory):
         # If no version is specified, overwrite by default
         built_targets = os.listdir(build_directory)
         building_target_again = any(target in built_targets for target in args.targets)
         # If the targets being built have not been built before, it should be fine to not do anything
-        if building_target_again:
-            if versioned_build:
-                if args.overwrite_build:
-                    print("Version directory already exists. Deleting..")
-                    shutil.rmtree(build_directory)
-                else:
-                    sys.exit(
-                        "Version directory/target already exists. Remove it manually first or pass --stomp to overwrite it"
-                    )
-            else:
-                print("Clearing build directory")
-                shutil.rmtree(build_directory)
+        # The deletion/creation of the target directories is handled in main() (they are just deleted if they exist).
+        if versioned_build and building_target_again and not args.overwrite_build:
+            sys.exit(
+                "Cannot rebuild an already built version + target combination. Remove it manually first or pass --stomp to overwrite it"
+            )
+    elif os.path.exists(build_directory):
+        sys.exit("Build directory exists and is not a directory")
     else:
         os.makedirs(build_directory)
     return build_directory
@@ -187,12 +166,6 @@ def main():
     # Restrict version name format somehow? A git refname?
     parser.add_argument("-v", "--version", help="Specify the version to be built.")
     parser.add_argument(
-        "-b",
-        "--bump-version",
-        action="store_true",
-        help="Bump the previously built version and use it as --version.",
-    )
-    parser.add_argument(
         "--check",
         action="store_true",
         help="Only load config and check some arguments, then exit without doing anything. This is mostly useful development.",
@@ -219,11 +192,15 @@ def main():
 
     build_log_path = get_build_log_path(config["build_directory"])
 
-    if args.bump_version:
-        if not os.path.isfile(build_log_path):
-            sys.exit(
-                "Could not find build log. It seems you have not built a versioned build before, so you can't pass --bump-version"
-            )
+    # Bump version if we are doing a versioned build and no version is specified
+    were_versioned_builds_made = os.path.isdir(
+        config["build_directory"]
+    ) and os.path.isfile(get_build_log_path(config["build_directory"]))
+
+    if were_versioned_builds_made and args.version == None:
+        print(
+            "Versioned builds were made in the past, but no version was specified for this build. Bumping last built version."
+        )
         with open(build_log_path) as f:
             build_log = json.load(f)
             last_built_version = build_log[-1]["version"]
@@ -246,7 +223,13 @@ def main():
     if len(targets) == 0:
         assert "default_targets" in config
         targets = config["default_targets"]
-    targets = list(set(targets))
+
+    # use this lame loop to make unique but keep target order
+    unique_targets = []
+    for target in targets:
+        if target not in unique_targets:
+            unique_targets.append(target)
+    targets = unique_targets
 
     if sys.platform.startswith("win") and "appimage" in targets:
         sys.exit("Currently AppImages can only be built on Linux and WSL2!")
@@ -285,10 +268,18 @@ def main():
 
     for target in targets:
         print(">> Building target {}".format(target))
+
+        target_directory = os.path.join(build_directory, target)
+        # If target_directory is not a directory, let it throw an exception
+        if os.path.exists(target_directory):
+            shutil.rmtree(target_directory)
+        os.makedirs(target_directory)
+
         if target == "win32" or target == "win64":
-            build_windows(args, config, target, build_directory, love_file_path)
+            build_windows(args, config, target, target_directory, love_file_path)
         elif target == "appimage":
-            build_linux(args, config, target, build_directory, love_file_path)
+            build_linux(args, config, target, target_directory, love_file_path)
+
         print("Target {} complete".format(target))
 
     execute_hooks(args, config, "postbuild")
