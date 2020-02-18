@@ -246,7 +246,12 @@ def main():
     if len(targets) == 0:
         assert "default_targets" in config
         targets = config["default_targets"]
-        print("Building default targets:", ", ".join(targets))
+    targets = list(set(targets))
+
+    if sys.platform.startswith("win") and "appimage" in targets:
+        sys.exit("Currently AppImages can only be built on Linux and WSL2!")
+
+    print("Building targets:", ", ".join(targets))
 
     if args.version != None:
         with JsonFile(build_log_path, indent=4) as build_log:
