@@ -3,8 +3,8 @@
 A packaging tool for [löve](https://love2d.org) games
 
 ## Features
-* Build fused win32 and win64 löve binaries with effortless setting of .exe metadata (including the icon)
-* Build [AppImage](https://appimage.org/)s using the AppImages from [love-appimages](pfirsich/love-appimages) (this implies support for löve 0.10 and 0.9!)
+* Build fused win32 and win64 löve binaries (including handling of .exe metadata and icon, but only on Windows & WINE!)
+* Build [AppImage](https://appimage.org/)s using the AppImages from [love-appimages](pfirsich/love-appimages) (This is feature is only supported on Linux and WSL2. WSL does not support AppImages for a lack of FUSE support)
 * Proper handling of shared libraries (both Lua modules and FFI)!
 * Packaging of those binaries in archives, including extra files
 * Versioned builds
@@ -15,9 +15,12 @@ A packaging tool for [löve](https://love2d.org) games
     - Which artifacts to generate/keep
     - pre- and postbuild hooks that are able to change the configuration on the fly. For example you can decide dynamically which files to include in the .love (e.g. through parsing asset lists), inject build metadata or just to upload your build automatically afterwards (e.g. via butler to [itch.io](https://itch.io)))
 
+### Planned
+* Mac build support (**help needed**, since I do not have a Mac to test on)
+
 ## Quickstart
 
-To use makelove you need to install Python 3.7 or later and then execute:
+To use makelove you need to install Python 3.7 or later and then execute (probably just `pip` on Windows):
 ```
 pip3 install makelove
 ```
@@ -30,13 +33,22 @@ and enter the values you are prompted for. This will create a makelove.toml in y
 
 It is also possible to execute makelove without any configuration file (makelove will try to guess every configuration parameter), but `makelove --init` does not take long to execute and will probably give you way better results.
 
-Then just invoke makelove to do the build:
+If you want to do unversioned builds, it's simply enough to invoke makelove:
 ```
 makelove
 ```
-And other parameters are optional
 
-// add auto-bump?
+If you wish to version your builds, you should pass a version the first time you build:
+```
+makelove --version 0.1
+```
+
+For all subsequent builds the version number will simply be bumped unless you specify a version explicitely and an invocation of makelove without arguments is enough.
+
+There are a number of arguments you can specify to customize the build (e.g. to specify a configuration file explicitely, disable hooks, produce more verbose output or check the config file), so make sure to have a look at the help text of makelove:
+```
+makelove --help
+```
 
 // link makelove_full.toml
 // more examples
