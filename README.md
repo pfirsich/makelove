@@ -62,3 +62,5 @@ makelove --help
 All possible configuration values are shown and explained in [makelove_full.toml](makelove_full.toml) (not a valid makelove configuration).
 
 Hooks are capable of rewriting the config for a build. For more information on configuring hooks, see [hooks.md](hooks.md) (coming soon!)
+
+If you wish to do some extravagant things, have a look at [how_to_x.md](how_to_x.md), which may list what you are trying to do. If there is anything that you want to do, but can't please let me know and I will try to add whatever is needed, if the change is reasonable.
