@@ -5,14 +5,6 @@ I took great care in making sure that everything I could make up that anyone cou
 
 Not everything in here is tested, but the ideas should be sound. If something is incorrect, let me know!
 
-## Keep (only) the AppDir the AppImage is created from
-Add a script `appimagetool` to `PATH` before executing `makelove` that does this:
-```bash
-cp -R $1 AppDir $(dirname $2)/AppDir
-# Optionally invoke the actual appimagetool to create an AppImage
-~/bin/appimagetool-x86_64.AppImage $1 $2
-```
-
 ## Mount `getSourceBaseDirectory()` and store assets next to the .exe
 If you just build Windows, just only include the `*.lua` files in `love_files` and all the media in `archive_files`.
 I you build appimages too, i.e. you need different .love files for different targets, then you have to simply use different configuration files!
