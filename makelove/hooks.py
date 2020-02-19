@@ -11,7 +11,7 @@ from .config import get_config
 from .util import tmpfile
 
 
-def execute_hook(command, args, config):
+def execute_hook(command, config, version, targets, build_directory):
     tmp_config_path = tmpfile(suffix=".toml")
 
     with open(tmp_config_path, "w") as f:
@@ -19,11 +19,17 @@ def execute_hook(command, args, config):
 
     env = {
         "MAKELOVE_TEMP_CONFIG": tmp_config_path,
-        "MAKELOVE_VERSION": args.version if args.version != None else "",
+        "MAKELOVE_VERSION": version or "",
+        "MAKELOVE_TARGETS": ",".join(targets),
+        "MAKELOVE_BUILD_DIRECTORY": build_directory,
     }
 
+    command_replaced = command.format(
+        version=version or "", build_directory=build_directory
+    )
+
     try:
-        subprocess.run(command, shell=True, check=True, env=env)
+        subprocess.run(command_replaced, shell=True, check=True, env=env)
     except Exception as e:
         sys.exit("Hook '{}' failed: {}".format(command, e))
 

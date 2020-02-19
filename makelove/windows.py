@@ -80,7 +80,7 @@ def can_set_metadata(platform):
     return False
 
 
-def get_exe_metadata(args, config):
+def get_exe_metadata(config, version):
     # Default values listed here are from löve 11.3 (extra/windows/love.rc)
 
     metadata = {}
@@ -89,15 +89,15 @@ def get_exe_metadata(args, config):
 
     # Default value in löve: "LÖVE <version>"
     if not "FileDescription" in metadata:
-        if args.version != None:
-            metadata["FileDescription"] = "{} {}".format(config["name"], args.version)
+        if version != None:
+            metadata["FileDescription"] = "{} {}".format(config["name"], version)
         else:
             metadata["FileDescription"] = config["name"]
 
     # Default value is löve version
     if not "FileVersion" in metadata:
-        if args.version != None:
-            metadata["FileVersion"] = args.version
+        if version != None:
+            metadata["FileVersion"] = version
         else:
             metadata["FileVersion"] = ""
 
@@ -164,7 +164,7 @@ def set_exe_metadata(exe_path, metadata, icon_file):
         sys.exit("Could not set exe metadata:\n" + res.stderr.decode("utf-8"))
 
 
-def build_windows(args, config, target, target_directory, love_file_path):
+def build_windows(config, version, target, target_directory, love_file_path):
     if target in config and "love_binaries" in config[target]:
         love_binaries = config[target]["love_binaries"]
     else:
@@ -192,7 +192,7 @@ def build_windows(args, config, target, target_directory, love_file_path):
     if can_set_metadata(sys.platform):
         prepare_rcedit()
 
-        metadata = get_exe_metadata(args, config)
+        metadata = get_exe_metadata(config, version)
 
         # Default value is "löve.exe" of course.
         # This value is used to determine if an executable has been renamed

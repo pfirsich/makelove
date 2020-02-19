@@ -97,7 +97,7 @@ def replace_single(string, pat, subst):
         return string.replace(pat, subst)
 
 
-def build_linux(args, config, target, target_directory, love_file_path):
+def build_linux(config, version, target, target_directory, love_file_path):
     if target in config and "source_appimage" in config[target]:
         source_appimage = config[target]["source_appimage"]
     else:

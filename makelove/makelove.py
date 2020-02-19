@@ -8,6 +8,7 @@ import subprocess
 from email.utils import formatdate
 import zipfile
 import re
+import pkg_resources
 
 from .config import get_config, all_targets, init_config_assistant
 from .hooks import execute_hook
@@ -67,9 +68,9 @@ def prepare_build_directory(args, config):
         building_target_again = any(target in built_targets for target in args.targets)
         # If the targets being built have not been built before, it should be fine to not do anything
         # The deletion/creation of the target directories is handled in main() (they are just deleted if they exist).
-        if versioned_build and building_target_again and not args.overwrite_build:
+        if versioned_build and building_target_again and not args.force:
             sys.exit(
-                "Cannot rebuild an already built version + target combination. Remove it manually first or pass --stomp to overwrite it"
+                "Cannot rebuild an already built version + target combination. Remove it manually first or pass --force to overwrite it"
             )
     elif os.path.exists(build_directory):
         sys.exit("Build directory exists and is not a directory")
@@ -78,14 +79,12 @@ def prepare_build_directory(args, config):
     return build_directory
 
 
-def execute_hooks(args, config, name):
-    if (
-        "hooks" in config
-        and name in config["hooks"]
-        and not name in args.disabled_hooks
-    ):
-        for command in config["hooks"][name]:
-            new_config = execute_hook(command, args, config)
+def execute_hooks(hook, config, version, targets, build_directory):
+    if "hooks" in config and hook in config["hooks"]:
+        for command in config["hooks"][hook]:
+            new_config = execute_hook(
+                command, config, version, targets, build_directory
+            )
             config.clear()
             config.update(new_config)
 
@@ -133,6 +132,40 @@ def create_love_file(game_dir, love_file_path):
     love_archive.close()
 
 
+def get_build_version(args, config):
+    build_log_path = get_build_log_path(config["build_directory"])
+
+    # Bump version if we are doing a versioned build and no version is specified
+    were_versioned_builds_made = os.path.isfile(build_log_path)
+    if were_versioned_builds_made and args.version == None:
+        print(
+            "Versioned builds were made in the past, but no version was specified for this build. Bumping last built version."
+        )
+        with open(build_log_path) as f:
+            build_log = json.load(f)
+            last_built_version = build_log[-1]["version"]
+
+        return bump_version(last_built_version)
+
+    return args.version
+
+
+def get_targets(args, config):
+    targets = args.targets
+    if len(targets) == 0:
+        assert "default_targets" in config
+        targets = config["default_targets"]
+
+    # use this lame loop to make unique but keep target order
+    unique_targets = []
+    for target in targets:
+        if target not in unique_targets:
+            unique_targets.append(target)
+    targets = unique_targets
+
+    return targets
+
+
 def main():
     parser = argparse.ArgumentParser(prog="makelove")
     parser.add_argument(
@@ -153,10 +186,15 @@ def main():
         choices=all_hooks + ["all"],
     )
     parser.add_argument(
-        "--stomp",
-        dest="overwrite_build",
+        "--force",
+        dest="force",
         action="store_true",
-        help="Specify this option to overwrite a version that was already built.",
+        help="If doing a versioned build, specify this to overwrite a target that was already built.",
+    )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="If doing an unversioned build, specify this to not rebuild targets that were already built.",
     )
     parser.add_argument(
         "--verbose",
@@ -176,6 +214,12 @@ def main():
         help="Only load config and check some arguments, then exit without doing anything. This is mostly useful development.",
     )
     parser.add_argument(
+        "--version",
+        dest="display_version",
+        action="store_true",
+        help="Output the makelove version and exit.",
+    )
+    parser.add_argument(
         "targets",
         nargs="*",
         type=_choices(all_targets),
@@ -183,6 +227,10 @@ def main():
         help="Options: {}".format(", ".join(all_targets)),
     )
     args = parser.parse_args()
+
+    if args.display_version:
+        print("makelove {}".format(pkg_resources.get_distribution("makelove").version))
+        sys.exit(0)
 
     if not os.path.isfile("main.lua"):
         sys.exit(
@@ -195,25 +243,10 @@ def main():
 
     config = get_config(args)
 
-    build_log_path = get_build_log_path(config["build_directory"])
+    version = get_build_version(args, config)
 
-    # Bump version if we are doing a versioned build and no version is specified
-    were_versioned_builds_made = os.path.isdir(
-        config["build_directory"]
-    ) and os.path.isfile(get_build_log_path(config["build_directory"]))
-
-    if were_versioned_builds_made and args.version == None:
-        print(
-            "Versioned builds were made in the past, but no version was specified for this build. Bumping last built version."
-        )
-        with open(build_log_path) as f:
-            build_log = json.load(f)
-            last_built_version = build_log[-1]["version"]
-        # Assigning to args.version here is a hack, but I want to get this thing done
-        args.version = bump_version(last_built_version)
-
-    if args.version != None:
-        print("Building version '{}'".format(args.version))
+    if version != None:
+        print("Building version '{}'".format(version))
 
     if "all" in args.disabled_hooks:
         args.disabled_hooks = all_hooks
@@ -224,42 +257,38 @@ def main():
 
     build_directory = prepare_build_directory(args, config)
 
-    targets = args.targets
-    if len(targets) == 0:
-        assert "default_targets" in config
-        targets = config["default_targets"]
-
-    # use this lame loop to make unique but keep target order
-    unique_targets = []
-    for target in targets:
-        if target not in unique_targets:
-            unique_targets.append(target)
-    targets = unique_targets
+    targets = get_targets(args, config)
 
     if sys.platform.startswith("win") and "appimage" in targets:
         sys.exit("Currently AppImages can only be built on Linux and WSL2!")
 
+    build_log_path = get_build_log_path(config["build_directory"])
     print("Building targets:", ", ".join(targets))
 
-    if args.version != None:
+    if version != None:
         with JsonFile(build_log_path, indent=4) as build_log:
             build_log.append(
                 {
-                    "version": args.version,
+                    "version": version,
                     "build_time": formatdate(localtime=True),
                     "targets": targets,
                     "completed": False,
                 }
             )
 
-    execute_hooks(args, config, "prebuild")
+    if not "prebuild" in args.disabled_hooks:
+        execute_hooks("prebuild", config, version, targets, build_directory)
 
     love_directory = os.path.join(build_directory, "love")
     love_file_path = os.path.join(love_directory, "{}.love".format(config["name"]))
     game_directory = os.path.join(love_directory, "game_directory")
 
-    # Check for existence for resumable builds
-    if not os.path.isfile(love_file_path):
+    # This hold for both the löve file and the targets below:
+    # If we do a versioned build and reached this place, force/--force
+    # was passed, so we can just delete stuff.
+
+    rebuild_love = version != None or not args.resume
+    if not os.path.isfile(love_file_path) or rebuild_love:
         print("Assembling game directory..")
         assemble_game_directory(args, config, game_directory)
 
@@ -270,26 +299,30 @@ def main():
             print("Keeping game directory because 'keep_game_directory' is true")
         else:
             shutil.rmtree(game_directory)
+    else:
+        print(".love file already exists. Not rebuilding.")
 
     for target in targets:
         print(">> Building target {}".format(target))
 
         target_directory = os.path.join(build_directory, target)
         # If target_directory is not a directory, let it throw an exception
+        # We can overwrite here
         if os.path.exists(target_directory):
             shutil.rmtree(target_directory)
         os.makedirs(target_directory)
 
         if target == "win32" or target == "win64":
-            build_windows(args, config, target, target_directory, love_file_path)
+            build_windows(config, version, target, target_directory, love_file_path)
         elif target == "appimage":
-            build_linux(args, config, target, target_directory, love_file_path)
+            build_linux(config, version, target, target_directory, love_file_path)
 
         print("Target {} complete".format(target))
 
-    execute_hooks(args, config, "postbuild")
+    if not "postbuild" in args.disabled_hooks:
+        execute_hooks("postbuild", config, version, targets, build_directory)
 
-    if args.version != None:
+    if version != None:
         with JsonFile(build_log_path, indent=4) as build_log:
             build_log[-1]["completed"] = True
 
