@@ -165,7 +165,10 @@ def main():
     )
     # Restrict version name format somehow? A git refname?
     parser.add_argument(
-        "-n", "--version-name", help="Specify the name of the version to be built."
+        "-n",
+        "--version-name",
+        dest="version",
+        help="Specify the name of the version to be built.",
     )
     parser.add_argument(
         "--check",

@@ -46,7 +46,7 @@ makelove
 If you wish to version your builds, you should pass a version the first time you build:
 
 ```
-makelove --version 0.1
+makelove --version-name 0.1
 ```
 
 For all subsequent builds the version number will simply be bumped unless you specify a version explicitely and an invocation of makelove without arguments is enough.

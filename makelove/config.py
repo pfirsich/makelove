@@ -130,6 +130,9 @@ def get_default_targets():
 
 
 def guess_love_version():
+    if not os.path.isfile("conf.lua"):
+        return None
+
     with open("conf.lua") as f:
         conf_lua = f.read()
 
