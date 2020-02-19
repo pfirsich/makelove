@@ -12,8 +12,11 @@ I recommend putting the shared configuration into a separate file and then `cat`
 
 ## Execute a build in multiple steps (with different targets)
 E.g. you want to execute `makelove win32 win64` on your windows machine, then switch to Linux and execute `makelove appimage` and for some reason Wine does not work for you, so you have to do it that way.
+
 I call this "resumable" builds.
+
 If you don't use versioned builds and no postbuild/prebuild hooks, you don't have to do anything, except pass `--resume` for each invocation of `makelove` after the first.
+
 If you don't use hooks, but versioned builds, just build each target individually and pass the same version each time.
 
 Otherwise just build the first target without a postbuild hook:
