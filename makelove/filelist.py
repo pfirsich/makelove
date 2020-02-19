@@ -1,6 +1,7 @@
 import fnmatch
 import os
 import re
+import sys
 
 
 class FileList(object):
@@ -8,9 +9,17 @@ class FileList(object):
         self.dir = path
         self.full_list = []
         self.file_list = set()
-        for root, _dirs, files in os.walk(self.dir):
+        dirs_seen = set()
+        for root, dirs, files in os.walk(self.dir, followlinks=True):
+            for d in dirs:
+                realpath = os.path.realpath(os.path.join(root, d))
+                if realpath in dirs_seen:
+                    sys.exit("Detected infinite recursion while walking directory")
+                dirs_seen.add(realpath)
+
             for fname in files:
-                self.full_list.append(os.path.join(root, fname))
+                path = os.path.join(root, fname)
+                self.full_list.append(path)
 
     def include(self, pattern):
         matches = set(fnmatch.filter(self.full_list, pattern))
