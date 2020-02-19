@@ -184,14 +184,14 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.init:
-        init_config_assistant()
-        sys.exit(0)
-
     if not os.path.isfile("main.lua"):
         sys.exit(
             "There is no main.lua present in the current directory. Please execute makelove in a love game directory"
         )
+
+    if args.init:
+        init_config_assistant()
+        sys.exit(0)
 
     config = get_config(args)
 
