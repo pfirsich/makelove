@@ -171,12 +171,12 @@ def validate_config(config):
         sys.exit("Could not parse config:\n{}".format(exc))
 
 
-def get_raw_config(args):
-    if args.config != None:
-        if not os.path.isfile(args.config):
-            sys.exit("Config file '{}' does not exist".format(args.config))
-        print("Loading config file '{}'".format(args.config))
-        return load_config_file(args.config)
+def get_raw_config(config_path):
+    if config_path != None:
+        if not os.path.isfile(config_path):
+            sys.exit("Config file '{}' does not exist".format(config_path))
+        print("Loading config file '{}'".format(config_path))
+        return load_config_file(config_path)
     else:
         if os.path.isfile(default_config_name):
             print("Loading config from default path '{}'".format(default_config_name))
@@ -186,8 +186,8 @@ def get_raw_config(args):
             return {}
 
 
-def get_config(args):
-    config = get_raw_config(args)
+def get_config(config_path):
+    config = get_raw_config(config_path)
     if not "name" in config:
         config["name"] = guess_name()
         print("Guessing project name as '{}'".format(config["name"]))

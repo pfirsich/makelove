@@ -242,7 +242,7 @@ def build_windows(config, version, target, target_directory, love_file_path):
 
     if should_build_artifact(config, target, "archive", True):
         archive_path = os.path.join(
-            target_directory, "{}-{}.zip".format(config["name"], target)
+            target_directory, "{}-{}".format(config["name"], target)
         )
         shutil.make_archive(archive_path, "zip", temp_archive_dir)
 

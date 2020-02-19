@@ -24,7 +24,7 @@ class FileList(object):
     def include(self, pattern):
         matches = set(fnmatch.filter(self.full_list, pattern))
         if len(matches) == 0:
-            print("Warning: Pattern '{}' does not match any files")
+            print("Warning: Pattern '{}' does not match any files".format(pattern))
         self.file_list |= matches
 
     def include_raw(self, item):

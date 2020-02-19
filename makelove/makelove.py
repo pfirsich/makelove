@@ -241,7 +241,7 @@ def main():
         init_config_assistant()
         sys.exit(0)
 
-    config = get_config(args)
+    config = get_config(args.config)
 
     version = get_build_version(args, config)
 
