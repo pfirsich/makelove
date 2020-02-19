@@ -11,9 +11,9 @@ I you build appimages too, i.e. you need different .love files for different tar
 I recommend putting the shared configuration into a separate file and then `cat` it together with your specific configuration before you execute `makelove`. I consciously chose TOML because you can concatenate configurations!
 
 ## Execute a build in multiple steps (with different targets)
-E.g. you want to execute `makelove win32 win64` on your windows machine, then switch to Linux and execute `makelove appimage` and for some reason WINE does not work for you, so you have to do it that way.
+E.g. you want to execute `makelove win32 win64` on your windows machine, then switch to Linux and execute `makelove appimage` and for some reason Wine does not work for you, so you have to do it that way.
 I call this "resumable" builds.
-If you don't use versioned builds and no postbuild/prebuild hooks, you don't have to do anything.
+If you don't use versioned builds and no postbuild/prebuild hooks, you don't have to do anything, except pass `--resume` for each invocation of `makelove` after the first.
 If you don't use hooks, but versioned builds, just build each target individually and pass the same version each time.
 
 Otherwise just build the first target without a postbuild hook:
@@ -24,10 +24,11 @@ makelove -d postbuild -v 1.2.3 win32 win64
 
 Then build all subsequent targets without any hooks:
 ```
-makelove -d all -v 1.2.3 mac
+makelove -d all -v 1.2.3 mac (--resume)
 ```
+Optionally pass `--resume` for unversioned builds.
 
 And finally build without prebuild, but with postbuild
 ```
-makelove -d prebuild -v 1.2.3 appimage
+makelove -d prebuild -v 1.2.3 appimage (--resume)
 ```

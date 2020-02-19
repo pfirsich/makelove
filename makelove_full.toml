@@ -11,7 +11,10 @@ name = "Amazing Game"
 # remove matching files from the current set of files. If they start with "+" or neither
 # "+" nor "-", they will add matching files to the current set.
 # The patterns use Python's fnmatch (which does not set FNM_PATHNAME), so asterisk
-# will match slashes!
+# will match slashes! I admit that these patterns behave a little weirdly.
+# If you want to match a file in the root of the game directory, you need to do "./file"!
+# "./" is prepended to all paths, so you can use "*/foobar" to match foobar in all directories,
+# because "*foobar" would match "foofoobar" also.
 # You can also specify a magic value called "::git-ls-tree::" which expands to all files
 # tracked by git.
 # The following is the default if the current working directory is in a git repository:
@@ -45,11 +48,12 @@ icon_file = "icon.png"
 # the temporary game directory will be deleted, unless this parameter is true
 keep_game_directory = false
 
-# This specifies the files to be included in the archives generated for windows builds
-# The key is the local source path and the value is the path relative to the archive root
+# This specifies the files to be included in the zip archives generated for windows builds.
+# The key is the relative (to the game directory) source path
+# and the value is the destination path relative to the archive root.
 # You may specify files or directories
 [archive_files]
-"foo/bar/somefile.txt" = "somefile.txt"
+"foo/bar/README.md" = "README.md"
 "baz/baz/licenses" = "licenses" # directory
 ".itch.toml" = ".itch.toml"
 
@@ -57,11 +61,13 @@ keep_game_directory = false
 # Both hooks are a list of commands to be executed. They use the default shell.
 # For more information, see the README.md
 prebuild = [
-	"generate_changelog.py",
-	"generate_builddata.py",
+	"./generate_changelog.py",
+	"./generate_builddata.py",
 ]
 postbuild = [
-	"butler_push.py", 
+	# {build_directory} and {version} will be replaced
+	# This is obviously only for illustrative purposes, you will probaly want to wrap this in a script
+	"butler push {build_directory}/win32/SuperGame-win32.zip pfirsich/supergame:win32 --userversion {version}",
 ]
 
 [hooks.parameters]
