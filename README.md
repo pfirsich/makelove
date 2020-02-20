@@ -2,6 +2,8 @@
 
 A packaging tool for [löve](https://love2d.org) games
 
+**This tool is pretty early in development and may be buggy. Please do not expect it to work super well and contact me if you notice anything going wrong!**
+
 ## Features
 * Build fused win32 and win64 löve binaries (including handling of .exe metadata and icon, but only on Windows or with Wine!)
 * Build [AppImages](https://appimage.org/) using the AppImages from [love-appimages](https://github.com/pfirsich/love-appimages) (This is feature is only supported on Linux and WSL2. WSL does not support AppImages for a lack of FUSE support)

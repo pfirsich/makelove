@@ -31,7 +31,8 @@ class FileList(object):
         path = os.path.join(".", os.path.normpath(item))
         if os.path.isfile(path):
             self.file_list.add(path)
-        else:
+        # we ignore directories (which git doesn't track) and symlinks (which git does track!)
+        elif not os.path.exists(path):
             raise FileNotFoundError
 
     def exclude(self, pattern):
