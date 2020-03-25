@@ -129,11 +129,22 @@ def get_default_targets():
     return targets
 
 
+def get_conf_filename():
+    candidates = ["conf.lua", "conf.moon", "conf.ts"]
+    for name in candidates:
+        if os.path.isfile(name):
+            print("Found {}".format(name))
+            return name
+    print("Could not find löve config file")
+    return None
+
+
 def guess_love_version():
-    if not os.path.isfile("conf.lua"):
+    filename = get_conf_filename()
+    if filename == None:
         return None
 
-    with open("conf.lua") as f:
+    with open(filename) as f:
         conf_lua = f.read()
 
     regex = re.compile(r"(?<!--)\.version\s*=\s*\"(.*)\"")
@@ -195,7 +206,11 @@ def get_config(config_path):
         conf_love_version = guess_love_version()
         if conf_love_version:
             config["love_version"] = conf_love_version
-            print("Guessed löve version from conf.lua: {}".format(conf_love_version))
+            print(
+                "Guessed löve version from löve config file: {}".format(
+                    conf_love_version
+                )
+            )
         else:
             config["love_version"] = "11.3"  # update this manually here
             print("Assuming default löve version '{}'".format(config["love_version"]))
@@ -245,4 +260,3 @@ def init_config_assistant():
         f.write(config)
     print("Configuration written to {}".format(default_config_name))
     print("You should probably adjust love_files before you build.")
-
