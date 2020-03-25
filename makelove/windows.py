@@ -10,7 +10,7 @@ import subprocess
 from PIL import Image, UnidentifiedImageError
 import appdirs
 
-from .util import tmpfile
+from .util import tmpfile, eprint
 from .config import should_build_artifact
 
 
@@ -31,10 +31,17 @@ def get_default_love_binary_dir(version, platform):
 
 
 def get_download_url(version, platform):
-    url = "https://bitbucket.org/rude/love/downloads/"
+    # This function is intended to handle all the weird special cases and
+    # is therefore a allowed to be ugly
+    url = "https://github.com/love2d/love/releases/download/{}/".format(version)
     if list(map(int, version.split("."))) <= [0, 8, 0]:
         platform = {"win32": "win-x86", "win64": "win-x64"}[platform]
-    return url + "love-{}-{}.zip".format(version, platform)
+    if version == "11.0":
+        # Why? I don't know.
+        filename = "love-11.0.0-{}.zip".format(platform)
+    else:
+        filename = "love-{}-{}.zip".format(version, platform)
+    return url + filename
 
 
 def download_love(version, platform):
@@ -42,9 +49,18 @@ def download_love(version, platform):
     print("Downloading love binaries to: '{}'".format(target_path))
 
     os.makedirs(target_path, exist_ok=True)
-    with urlopen(get_download_url(version, platform)) as response:
-        with ZipFile(BytesIO(response.read())) as zipfile:
-            zipfile.extractall(target_path)
+    try:
+        download_url = get_download_url(version, platform)
+        print("Downloading '{}'..".format(download_url))
+        with urlopen(download_url) as response:
+            with ZipFile(BytesIO(response.read())) as zipfile:
+                zipfile.extractall(target_path)
+    except URLError as exc:
+        eprint("Could not download löve: {}".format(exc))
+        eprint(
+            "If there is in fact no download on GitHub for this version, specify 'love_binaries' manually."
+        )
+        sys.exit(1)
 
     # There is usually a single directory in the zip files
     # Move the contents up one level, then delete the empty directory
@@ -67,6 +83,7 @@ def prepare_rcedit():
             # I don't use the latest release, so I can be sure that the executable behaves as expected
             rcedit_download_url = "https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe"
             os.makedirs(os.path.dirname(rcedit_path), exist_ok=True)
+            print("Downloading '{}'..".format(rcedit_download_url))
             urlretrieve(rcedit_download_url, rcedit_path)
         except URLError as exc:
             sys.exit("Could not download rcedit: {}".format(exc))

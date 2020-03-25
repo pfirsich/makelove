@@ -80,6 +80,7 @@ def get_appimagetool():
         url = "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
         try:
             os.makedirs(os.path.dirname(appimage_path), exist_ok=True)
+            print("Downloading '{}'..".format(url))
             urlretrieve(url, appimage_path)
             os.chmod(appimage_path, 0o755)
             return appimage_path
