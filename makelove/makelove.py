@@ -257,8 +257,8 @@ def main():
         sys.exit(0)
 
     if not os.path.isfile("main.lua"):
-        sys.exit(
-            "There is no main.lua present in the current directory. Please execute makelove in a love game directory"
+        print(
+            "There is no main.lua present in the current directory! Unless you use MoonScript, this might be a mistake."
         )
 
     if args.init:
@@ -315,6 +315,11 @@ def main():
     if not os.path.isfile(love_file_path) or rebuild_love:
         print("Assembling game directory..")
         assemble_game_directory(args, config, game_directory)
+
+        if not os.path.isfile(os.path.join(game_directory, "main.lua")):
+            sys.exit(
+                "Your game directory does not contain a main.lua. This will result in a game that can not be run."
+            )
 
         create_love_file(game_directory, love_file_path)
         print("Created {}".format(love_file_path))
