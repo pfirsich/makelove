@@ -168,9 +168,13 @@ def build_linux(config, version, target, target_directory, love_file_path):
 
     if should_build_artifact(config, target, "appimage", True):
         print("Creating new AppImage..")
-        appimage_path = os.path.join(
-            target_directory, "{}.AppImage".format(config["name"])
-        )
+        appimage_filename = "{}.AppImage".format(config["name"])
+        if " " in appimage_filename:
+            print(
+                "Stripping whitespace in AppImage filename.\nThis is a known bug in the AppImage runtime: https://github.com/AppImage/AppImageKit/issues/678"
+            )
+            appimage_filename = appimage_filename.replace(" ", "")
+        appimage_path = os.path.join(target_directory, appimage_filename)
         ret = subprocess.run(
             [get_appimagetool(), appdir_path, appimage_path], capture_output=True
         )
