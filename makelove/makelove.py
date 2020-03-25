@@ -89,6 +89,34 @@ def execute_hooks(hook, config, version, targets, build_directory):
             config.update(new_config)
 
 
+def git_ls_tree(path=".", visited=None):
+    p = os.path
+
+    if visited == None:
+        visited = set()
+    rpath = p.realpath(path)
+    if rpath in visited:
+        sys.exit("Symlink loop detected!")
+    else:
+        visited.add(rpath)
+
+    ls_tree = (
+        subprocess.check_output(
+            ["git", "ls-tree", "-r", "--name-only", "HEAD"], cwd=path
+        )
+        .decode("utf-8")
+        .splitlines()
+    )
+    out = []
+    for item in ls_tree:
+        item_path = p.join(path, item)
+        if p.islink(item_path) and p.isdir(item_path):
+            out.extend(git_ls_tree(item_path, visited))
+        else:
+            out.append(item_path)
+    return out
+
+
 def assemble_game_directory(args, config, game_directory):
     if os.path.isdir(game_directory):
         shutil.rmtree(game_directory)
@@ -96,11 +124,7 @@ def assemble_game_directory(args, config, game_directory):
     file_list = FileList(".")
     for rule in config["love_files"]:
         if rule == "+::git-ls-tree::" or rule == "::git-ls-tree::":
-            ls_tree = (
-                subprocess.check_output(["git", "ls-tree", "-r", "--name-only", "HEAD"])
-                .decode("utf-8")
-                .splitlines()
-            )
+            ls_tree = git_ls_tree(".")
             for item in ls_tree:
                 try:
                     file_list.include_raw(item)

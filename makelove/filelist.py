@@ -34,6 +34,8 @@ class FileList(object):
         # we ignore directories (which git doesn't track) and symlinks (which git does track!)
         elif not os.path.exists(path):
             raise FileNotFoundError
+        else:
+            print("'{}' is not a file!".format(path))
 
     def exclude(self, pattern):
         matches = set(fnmatch.filter(self.file_list, pattern))
