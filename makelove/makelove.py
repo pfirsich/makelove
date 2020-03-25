@@ -52,15 +52,15 @@ def get_build_log_path(build_directory):
     return os.path.join(build_directory, ".makelove-buildlog")
 
 
-def prepare_build_directory(args, config):
+def prepare_build_directory(args, config, version):
     assert "build_directory" in config
     build_directory = config["build_directory"]
-    versioned_build = args.version != None
+    versioned_build = version != None
 
     if versioned_build:
         # Pretend the build directory is the version directory
         # I think this is somewhat hacky, but also nice at the same time
-        build_directory = os.path.join(build_directory, args.version)
+        build_directory = os.path.join(build_directory, version)
 
     if os.path.isdir(build_directory):
         # If no version is specified, overwrite by default
@@ -255,7 +255,7 @@ def main():
         print("Exiting because --check was passed.")
         sys.exit(0)
 
-    build_directory = prepare_build_directory(args, config)
+    build_directory = prepare_build_directory(args, config, version)
 
     targets = get_targets(args, config)
 
