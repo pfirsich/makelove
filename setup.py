@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="makelove",  # Replace with your own username
-    version="0.0.5",
+    name="makelove",
+    version="0.0.6",
     author="Joel Schumacher",
     author_email="joelschum@gmail.com",
     description="A packaging tool for [löve](https://love2d.org) games",
