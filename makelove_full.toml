@@ -34,7 +34,7 @@ love_version = "11.3"
 # The targets specified here are used if no targets are passed when makelove is invoked.
 # If you are on Linux, the default value is ["win32", "win64", "appimage"]
 # If you are on another OS, the default value is ["win32", "win64"]
-default_targets = ["win32", "win64", "appimage"] # <- possible values for now
+default_targets = ["win32", "win64", "appimage", "macos"] # <- possible values for now
 
 # By default this is "makelove-build"
 build_directory = "bauwerke"
@@ -107,11 +107,19 @@ shared_libraries = [
 # If "archive" is specified a .zip file containing the fused exe, the archive files,
 # .dlls and everything else is produced.
 # If "directory" is specified a directory with the same contents is created.
-# The default value of only "archive" implies that the directory will be deleted 
+# The default value of only "archive" implies that the directory will be deleted
 # after the .zip has been built.
 artifacts = "archive"
 
 # The values above for the target win32 can also be set for the win64 target
+
+[macos]
+icon_file = "macIcon.png"  # or macIcon.icns
+
+[macos.app_metadata]
+BundleIdentifier = "com.example.amazinggame"
+LegalCopyright = "" # "Copyright © 2006-2020 LÖVE Development Team" or ""
+FileVersion = "{version}"
 
 [linux]
 # These values are included in the .desktop file

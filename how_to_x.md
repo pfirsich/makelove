@@ -35,3 +35,13 @@ And finally build without prebuild, but with postbuild
 ```
 makelove -d prebuild -v 1.2.3 appimage (--resume)
 ```
+
+## Build windows targets on macOS
+
+Install wine (e.g., homebrew, shown here):
+
+```bash
+brew cask install wine-stable
+```
+
+Then build windows targets as normal (and run them!)

@@ -16,6 +16,7 @@ from .filelist import FileList
 from .jsonfile import JsonFile
 from .windows import build_windows
 from .linux import build_linux
+from .macos import build_macos
 
 all_hooks = ["prebuild", "postbuild"]
 
@@ -345,6 +346,8 @@ def main():
             build_windows(config, version, target, target_directory, love_file_path)
         elif target == "appimage":
             build_linux(config, version, target, target_directory, love_file_path)
+        elif target == "macos":
+            build_macos(config, version, target, target_directory, love_file_path)
 
         print("Target {} complete".format(target))
 

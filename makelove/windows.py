@@ -35,7 +35,10 @@ def get_download_url(version, platform):
     # is therefore a allowed to be ugly
     url = "https://github.com/love2d/love/releases/download/{}/".format(version)
     if list(map(int, version.split("."))) <= [0, 8, 0]:
-        platform = {"win32": "win-x86", "win64": "win-x64"}[platform]
+        platform = {"win32": "win-x86", "win64": "win-x64", "macos": "macosx-ub"}[platform]
+    elif version == "0.9.0" and platform == "macos":
+        platform = "macosx-x64"
+
     if version == "11.0":
         # Why? I don't know.
         filename = "love-11.0.0-{}.zip".format(platform)
@@ -143,7 +146,7 @@ def get_rcedit_command():
     rcedit_path = get_rcedit_path()
     if sys.platform.startswith("win32"):
         return [rcedit_path]
-    elif sys.platform.startswith("linux"):
+    elif sys.platform.startswith(("linux", "darwin")):
         return ["wine", rcedit_path]
     else:
         sys.exit("Can not execute rcedit on ths platform ({})".format(sys.platform))
