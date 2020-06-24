@@ -17,10 +17,6 @@ A packaging tool for [löve](https://love2d.org) games
     - Which artifacts to generate or keep
     - pre- and postbuild hooks that are able to change the configuration on the fly. For example you can decide dynamically which files to include in the .love (e.g. through parsing asset lists), inject build metadata or just to upload your build automatically afterwards (e.g. via butler to [itch.io](https://itch.io)))
 
-### Planned
-
-- Mac build support (**help needed**, since I do not have a Mac to test on)
-
 ## Quickstart
 
 To use makelove you need to install Python 3.7 or later and then execute (probably just `pip` on Windows):

@@ -5,6 +5,8 @@ import os
 import re
 from distutils.util import strtobool
 
+import appdirs
+
 
 def eprint(*args, **kwargs):
     print(*args, **kwargs, file=sys.stderr)
@@ -63,3 +65,28 @@ def prompt(prompt_str, default=None):
         else:
             if default != None:
                 return default
+
+
+def get_default_love_binary_dir(version, platform):
+    return os.path.join(
+        appdirs.user_cache_dir("makelove"), "love-binaries", version, platform
+    )
+
+
+def get_download_url(version, platform):
+    # This function is intended to handle all the weird special cases and
+    # is therefore a allowed to be ugly
+    url = "https://github.com/love2d/love/releases/download/{}/".format(version)
+    if list(map(int, version.split("."))) <= [0, 8, 0]:
+        platform = {"win32": "win-x86", "win64": "win-x64", "macos": "macosx-ub"}[
+            platform
+        ]
+    elif version == "0.9.0" and platform == "macos":
+        platform = "macosx-x64"
+
+    if version == "11.0":
+        # Why? I don't know.
+        filename = "love-11.0.0-{}.zip".format(platform)
+    else:
+        filename = "love-{}-{}.zip".format(version, platform)
+    return url + filename

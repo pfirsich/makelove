@@ -117,9 +117,10 @@ artifacts = "archive"
 icon_file = "macIcon.png"  # or macIcon.icns
 
 [macos.app_metadata]
-BundleIdentifier = "com.example.amazinggame"
-LegalCopyright = "" # "Copyright © 2006-2020 LÖVE Development Team" or ""
-FileVersion = "{version}"
+CFBundleName = "<same as the name from the main config>"
+CFBundleIdentifier = "tld.yourgamename"
+NSHumanReadableCopyright = "Copyright © 2006-2020 LÖVE Development Team"
+CFBundleShortVersionString = "{version}"
 
 [linux]
 # These values are included in the .desktop file
