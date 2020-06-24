@@ -114,6 +114,7 @@ artifacts = "archive"
 # The values above for the target win32 can also be set for the win64 target
 
 [macos]
+# optionally, you can include a mac-specific icon, if not mac will use the same icon as other targets
 icon_file = "macIcon.png"  # or macIcon.icns
 
 [macos.app_metadata]
