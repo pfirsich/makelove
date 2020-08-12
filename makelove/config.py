@@ -11,7 +11,7 @@ from .util import prompt
 
 default_config_name = "makelove.toml"
 
-all_targets = ["win32", "win64", "appimage"]
+all_targets = ["win32", "win64", "appimage", "macos"]
 
 all_love_versions = [
     "11.3",
@@ -85,6 +85,13 @@ config_params = {
             "source_appimage": val.Path(),
             "shared_libraries": val.List(val.Path()),
             "artifacts": val.ValueOrList(val.Choice("appdir", "appimage")),
+        }
+    ),
+    "macos": val.Section(
+        {
+            "love_binaries": val.Path(),
+            "icon_file": val.Path(),
+            "app_metadata": val.Dict(val.String(), val.String()),
         }
     ),
 }

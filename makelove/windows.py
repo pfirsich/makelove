@@ -1,4 +1,3 @@
-import copy
 import sys
 import os
 import shutil
@@ -10,7 +9,7 @@ import subprocess
 from PIL import Image, UnidentifiedImageError
 import appdirs
 
-from .util import tmpfile, eprint
+from .util import get_default_love_binary_dir, get_download_url, tmpfile, eprint
 from .config import should_build_artifact
 
 
@@ -22,26 +21,6 @@ def common_prefix(l):
         for i in range(len(min(l, key=len)))
         if all(name.startswith(l[0][:i]) for name in l)
     )
-
-
-def get_default_love_binary_dir(version, platform):
-    return os.path.join(
-        appdirs.user_cache_dir("makelove"), "love-binaries", version, platform
-    )
-
-
-def get_download_url(version, platform):
-    # This function is intended to handle all the weird special cases and
-    # is therefore a allowed to be ugly
-    url = "https://github.com/love2d/love/releases/download/{}/".format(version)
-    if list(map(int, version.split("."))) <= [0, 8, 0]:
-        platform = {"win32": "win-x86", "win64": "win-x64"}[platform]
-    if version == "11.0":
-        # Why? I don't know.
-        filename = "love-11.0.0-{}.zip".format(platform)
-    else:
-        filename = "love-{}-{}.zip".format(version, platform)
-    return url + filename
 
 
 def download_love(version, platform):
@@ -141,9 +120,21 @@ def get_exe_metadata(config, version):
 
 def get_rcedit_command():
     rcedit_path = get_rcedit_path()
+
     if sys.platform.startswith("win32"):
         return [rcedit_path]
-    elif sys.platform.startswith("linux"):
+    elif sys.platform.startswith(("linux", "darwin")):
+        with open(os.devnull, "w") as devnull:
+            try:
+                subprocess.run(["wine", "--version"], stdout=devnull)
+            except FileNotFoundError:
+                eprint("Wine is required to produce Windows builds on macOS and Linux.")
+                if sys.platform.startswith("darwin"):
+                    eprint(
+                        "\nYou can install Wine with Homebrew:\n\n"
+                        "  brew cask install wine-stable"
+                    )
+                sys.exit(1)
         return ["wine", rcedit_path]
     else:
         sys.exit("Can not execute rcedit on ths platform ({})".format(sys.platform))
