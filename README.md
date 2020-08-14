@@ -73,11 +73,19 @@ Whenever a target is built again, the love file will be rebuilt (unless `--resum
 
 ### Versioned
 
-For versioned builds on the other hand a new directory (with the version name) is created for each build (the old ones are kept). 
+For versioned builds on the other hand a new directory (with the version name) is created for each build (the old ones are kept).
 
 You can also build a version + target pair that was already built. If you attempt to rebuild a target, makelove will error, unless you specify `--force`, which will overwrite that target instead. The löve file will not be rebuilt (even with `--force`) as it defines the version itself. If you wish to replace the löve file, you can just delete the version directory and rebuild the version completely.
 
 If a versioned built has been made, a build log is created/updated (in `build_directory/.makelove-buildlog`) that contains a history of the builds (targets built, timestamp, success).
+
+## GitHub Actions
+You can find an example YAML file that will run makelove in a GitHub Action here:
+[build.yml](https://github.com/pfirsich/lovejam20/blob/349f645ec65db9563b1c58f176f0207051294875/.github/workflows/build.yml).
+
+Since Linux is the only platform that can make builds for every platform, an Action might be useful to get those, even if you do not have a Linux machine easily at your disposal.
+
+The file does need some adaptions in regards to where makelove should be executed and the build directory, but otherwise it should be fairly copy-pastable. **Do read the comments in that file first though!** Also note that this is not meant for versioned builds, since those need an extra manual input (the version). In case you need them, consider taking the version from a file in the repository.
 
 ## Hooks
 
