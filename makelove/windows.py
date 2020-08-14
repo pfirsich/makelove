@@ -165,7 +165,7 @@ def set_exe_metadata(exe_path, metadata, icon_file):
             except IOError as exc:
                 sys.exit("Could not convert icon to .ico: {}".format(exc))
 
-    res = subprocess.run(args)
+    res = subprocess.run(args, capture_output=True)
     if temp_ico_path:
         os.remove(temp_ico_path)
     if res.returncode != 0:
