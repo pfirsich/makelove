@@ -10,7 +10,7 @@ import zipfile
 import re
 import pkg_resources
 
-from makelove.web import build_web
+from makelove.lovejs import build_lovejs
 from .config import get_config, all_targets, init_config_assistant
 from .hooks import execute_hook
 from .filelist import FileList
@@ -349,8 +349,8 @@ def main():
             build_linux(config, version, target, target_directory, love_file_path)
         elif target == "macos":
             build_macos(config, version, target, target_directory, love_file_path)
-        elif target == "web":
-            build_web(config, version, target, target_directory, love_file_path)
+        elif target == "lovejs":
+            build_lovejs(config, version, target, target_directory, love_file_path)
 
         print("Target {} complete".format(target))
 

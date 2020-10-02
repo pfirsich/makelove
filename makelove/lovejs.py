@@ -3,7 +3,6 @@ import json
 import os
 import sys
 import uuid
-from datetime import datetime
 from pathlib import Path
 from zipfile import ZipFile
 from urllib.request import urlretrieve, URLError
@@ -17,7 +16,7 @@ def download_love(version, platform):
     would lose data about symlinks when building on windows
     """
     if version != "11.3":
-        eprint("Web builds are only available for Löve 11.3+")
+        eprint("LoveJS builds are only available for Löve 11.3+")
         sys.exit(1)
 
     target_path = get_default_love_binary_dir(version, platform)
@@ -45,7 +44,7 @@ def render_mustache(tmpl, cx):
     return tmpl.encode('utf-8')
 
 
-def build_web(config, version, target, target_directory, love_file_path):
+def build_lovejs(config, version, target, target_directory, love_file_path):
     if target in config and "love_binaries" in config[target]:
         love_binaries = config[target]["love_binaries"]
     else:
