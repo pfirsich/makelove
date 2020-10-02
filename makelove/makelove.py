@@ -10,7 +10,6 @@ import zipfile
 import re
 import pkg_resources
 
-from makelove.lovejs import build_lovejs
 from .config import get_config, all_targets, init_config_assistant
 from .hooks import execute_hook
 from .filelist import FileList
@@ -18,6 +17,7 @@ from .jsonfile import JsonFile
 from .windows import build_windows
 from .linux import build_linux
 from .macos import build_macos
+from .lovejs import build_lovejs
 
 all_hooks = ["prebuild", "postbuild"]
 
