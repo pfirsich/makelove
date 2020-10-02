@@ -94,6 +94,12 @@ config_params = {
             "app_metadata": val.Dict(val.String(), val.String()),
         }
     ),
+    "lovejs": val.Section(
+        {
+            "title": val.String(),
+            "memory": val.String(),
+        }
+    ),
 }
 
 

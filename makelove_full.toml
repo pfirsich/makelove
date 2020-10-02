@@ -145,3 +145,7 @@ shared_libraries = [
 # for appimage the possible values are: "appimage" and "appdir",
 # where "appdir" is the AppDir the AppImage is generated from.
 artifacts = "appimage" # default is to delete the AppDir
+
+[lovejs]
+title = "Amazing Game"  # used on the resulting web page
+memory = "20000000"  # starting memory of the webpage (default is 20 MB)

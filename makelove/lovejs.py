@@ -65,7 +65,7 @@ def build_lovejs(config, version, target, target_directory, love_file_path):
     ) as love_zip:
         game_data = love_zip.read()
         fileMetadata = [{
-            "filename": "game.love",
+            "filename": "/game.love",
             "crunched": 0,
             "start": 0,
             "end": len(game_data),
@@ -76,9 +76,9 @@ def build_lovejs(config, version, target, target_directory, love_file_path):
         app_zip.writestr(f"{config['name']}/index.html", render_mustache(
             love_binary_zip.read(str(prefix / "src" / "compat"/ "index.html")),
             {
-                "title": config['name'],
+                "title": config.get("lovejs", {}).get("title", config["name"]),
                 "arguments": json.dumps(['./game.love']),
-                "memory": int(len(game_data)*1.5),
+                "memory": int(config.get('lovejs', {}).get("memory", "20000000")),
             }
         ))
         app_zip.writestr(
@@ -86,7 +86,7 @@ def build_lovejs(config, version, target, target_directory, love_file_path):
             render_mustache(
                 love_binary_zip.read(str(prefix / "src" / "game.js")),
                 {
-                    "create_file_paths": f"Module['FS_createPath']('/', 'game.love', true, true);",
+                    "create_file_paths": "",
                     "metadata": json.dumps({
                         "package_uuid": uuid.uuid4().hex,
                         "remote_package_size": len(game_data),
