@@ -11,7 +11,7 @@ from .util import prompt
 
 default_config_name = "makelove.toml"
 
-all_targets = ["win32", "win64", "appimage", "macos"]
+all_targets = ["win32", "win64", "appimage", "macos", "web"]
 
 all_love_versions = [
     "11.3",
