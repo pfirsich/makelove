@@ -7,17 +7,14 @@ from pathlib import Path
 from zipfile import ZipFile
 from urllib.request import urlretrieve, URLError
 
-from .util import eprint, get_default_love_binary_dir, get_download_url
+from .util import eprint, get_default_love_binary_dir
 
 
 def download_love(version, platform):
-    """
-    Note, mac builds are stored as zip files because extracting them
-    would lose data about symlinks when building on windows
-    """
     if version != "11.3":
-        eprint("LoveJS builds are only available for Löve 11.3+")
-        sys.exit(1)
+        eprint(
+            "LoveJS only supports Löve 11.3 - this should be compatible with other 11.x releases, other versions may not work."
+        )
 
     target_path = get_default_love_binary_dir(version, platform)
     print("Downloading love binaries to: '{}'".format(target_path))
@@ -37,11 +34,11 @@ def download_love(version, platform):
 
 
 def render_mustache(tmpl, cx):
-    tmpl = tmpl.decode('utf-8')
+    tmpl = tmpl.decode("utf-8")
     for k, v in cx.items():
         tmpl = tmpl.replace("{{{" + k + "}}}", str(v))
         tmpl = tmpl.replace("{{" + k + "}}", html.escape(str(v)))
-    return tmpl.encode('utf-8')
+    return tmpl.encode("utf-8")
 
 
 def build_lovejs(config, version, target, target_directory, love_file_path):
@@ -56,59 +53,64 @@ def build_lovejs(config, version, target, target_directory, love_file_path):
         else:
             download_love(config["love_version"], target)
 
-    src = os.path.join(love_binaries, "love.zip")
-    dst = os.path.join(target_directory, f"{config['name']}-{target}.zip")
-    with open(src, "rb") as lovef, ZipFile(lovef) as love_binary_zip, open(
-        dst, "wb+"
-    ) as outf, ZipFile(outf, mode="w") as app_zip, open(
-        love_file_path, "rb"
-    ) as love_zip:
+    with open(love_file_path, "rb") as love_zip:
         game_data = love_zip.read()
-        fileMetadata = [{
-            "filename": "/game.love",
-            "crunched": 0,
-            "start": 0,
-            "end": len(game_data),
-            "audio": False,
-        }]
+
+    src = Path(love_binaries) / "love.zip"
+    dst = Path(target_directory) / f"{config['name']}-{target}.zip"
+    with ZipFile(src, mode="r") as love_binary_zip, ZipFile(dst, mode="w") as app_zip:
+        fileMetadata = [
+            {
+                "filename": "/game.love",
+                "crunched": 0,
+                "start": 0,
+                "end": len(game_data),
+                "audio": False,
+            }
+        ]
 
         prefix = Path(love_binary_zip.filelist[0].filename)
-        app_zip.writestr(f"{config['name']}/index.html", render_mustache(
-            love_binary_zip.read(str(prefix / "src" / "compat"/ "index.html")),
-            {
-                "title": config.get("lovejs", {}).get("title", config["name"]),
-                "arguments": json.dumps(['./game.love']),
-                "memory": int(config.get('lovejs', {}).get("memory", "20000000")),
-            }
-        ))
+        app_zip.writestr(
+            f"{config['name']}/index.html",
+            render_mustache(
+                love_binary_zip.read(str(prefix / "src" / "compat" / "index.html")),
+                {
+                    "title": config.get("lovejs", {}).get("title", config["name"]),
+                    "arguments": json.dumps(["./game.love"]),
+                    "memory": int(config.get("lovejs", {}).get("memory", "20000000")),
+                },
+            ),
+        )
         app_zip.writestr(
             f"{config['name']}/game.js",
             render_mustache(
                 love_binary_zip.read(str(prefix / "src" / "game.js")),
                 {
                     "create_file_paths": "",
-                    "metadata": json.dumps({
-                        "package_uuid": uuid.uuid4().hex,
-                        "remote_package_size": len(game_data),
-                        "files": fileMetadata,
-                    }),
-                }
-            )
+                    "metadata": json.dumps(
+                        {
+                            "package_uuid": uuid.uuid4().hex,
+                            "remote_package_size": len(game_data),
+                            "files": fileMetadata,
+                        }
+                    ),
+                },
+            ),
         )
         app_zip.writestr(f"{config['name']}/game.data", game_data)
         app_zip.writestr(
             f"{config['name']}/love.js",
-            love_binary_zip.read(str(prefix / "src" / "compat" / "love.js"))
+            love_binary_zip.read(str(prefix / "src" / "compat" / "love.js")),
         )
         app_zip.writestr(
             f"{config['name']}/love.wasm",
-            love_binary_zip.read(str(prefix / "src" / "compat" / "love.wasm"))
+            love_binary_zip.read(str(prefix / "src" / "compat" / "love.wasm")),
         )
         app_zip.writestr(
             f"{config['name']}/theme/love.css",
-            love_binary_zip.read(str(prefix / "src" / "compat" / "theme" / "love.css"))
+            love_binary_zip.read(str(prefix / "src" / "compat" / "theme" / "love.css")),
         )
         app_zip.writestr(
             f"{config['name']}/theme/bg.png",
-            love_binary_zip.read(str(prefix / "src" / "compat" / "theme" / "bg.png"))
+            love_binary_zip.read(str(prefix / "src" / "compat" / "theme" / "bg.png")),
         )
