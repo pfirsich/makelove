@@ -11,7 +11,7 @@ from .util import prompt
 
 default_config_name = "makelove.toml"
 
-all_targets = ["win32", "win64", "appimage", "macos"]
+all_targets = ["win32", "win64", "appimage", "macos", "lovejs"]
 
 all_love_versions = [
     "11.3",
@@ -92,6 +92,12 @@ config_params = {
             "love_binaries": val.Path(),
             "icon_file": val.Path(),
             "app_metadata": val.Dict(val.String(), val.String()),
+        }
+    ),
+    "lovejs": val.Section(
+        {
+            "title": val.String(),
+            "memory": val.String(),
         }
     ),
 }

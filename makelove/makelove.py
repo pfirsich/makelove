@@ -17,6 +17,7 @@ from .jsonfile import JsonFile
 from .windows import build_windows
 from .linux import build_linux
 from .macos import build_macos
+from .lovejs import build_lovejs
 
 all_hooks = ["prebuild", "postbuild"]
 
@@ -348,6 +349,8 @@ def main():
             build_linux(config, version, target, target_directory, love_file_path)
         elif target == "macos":
             build_macos(config, version, target, target_directory, love_file_path)
+        elif target == "lovejs":
+            build_lovejs(config, version, target, target_directory, love_file_path)
 
         print("Target {} complete".format(target))
 
