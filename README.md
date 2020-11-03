@@ -7,6 +7,8 @@ A packaging tool for [löve](https://love2d.org) games
 ## Features
 * Build fused win32 and win64 löve binaries (including handling of .exe metadata and icon, but only on Windows or with Wine!)
 * Build [AppImages](https://appimage.org/) using the AppImages from [love-appimages](https://github.com/pfirsich/love-appimages) (This is feature is only supported on Linux and WSL2. WSL does not support AppImages for a lack of FUSE support)
+* Mac Builds
+* [love.js](https://github.com/Davidobot/love.js) builds (which does not support Lua modules from shared libraries or LuaJIT-specific features, like FFI)
 * Proper handling of shared libraries (both Lua modules and FFI)!
 * Packaging of those binaries in archives, including extra files
 * Versioned builds

@@ -7,14 +7,12 @@ from pathlib import Path
 from zipfile import ZipFile
 from urllib.request import urlretrieve, URLError
 
-from .util import eprint, get_default_love_binary_dir
+from .util import eprint, get_default_love_binary_dir, parse_love_version
 
 
 def download_love(version, platform):
-    if version != "11.3":
-        eprint(
-            "LoveJS only supports Löve 11.3 - this should be compatible with other 11.x releases, other versions may not work."
-        )
+    if parse_love_version(version)[0] != 11:
+        eprint("love.js only supports löve 11. The web build might not be functional.")
 
     target_path = get_default_love_binary_dir(version, platform)
     print("Downloading love binaries to: '{}'".format(target_path))
@@ -33,6 +31,7 @@ def download_love(version, platform):
     print("Download complete")
 
 
+# Simplified [mustache](https://github.com/janl/mustache.js) templating used by love.js
 def render_mustache(tmpl, cx):
     tmpl = tmpl.decode("utf-8")
     for k, v in cx.items():
