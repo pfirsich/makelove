@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="makelove",
-    version="0.0.7",
+    version="0.0.8",
     author="Joel Schumacher",
     author_email="joelschum@gmail.com",
     description="A packaging tool for [löve](https://love2d.org) games",
