@@ -73,20 +73,25 @@ def get_default_love_binary_dir(version, platform):
     )
 
 
+# TOOD: Think about hard-coding a big dictionary with download links, so I can error out if I know that there is no download link
 def get_download_url(version, platform):
     # This function is intended to handle all the weird special cases and
-    # is therefore a allowed to be ugly
-    url = "https://github.com/love2d/love/releases/download/{}/".format(version)
-    if list(map(int, version.split("."))) <= [0, 8, 0]:
+    # is therefore allowed to be ugly
+
+    # Other platforms don't use this function
+    assert platform in ["win32", "win64", "macos"]
+
+    url = "https://github.com/love2d/love/releases/download/{}".format(version)
+
+    parsed_version = parse_love_version(version)
+    if parsed_version[0] <= 8:
         platform = {"win32": "win-x86", "win64": "win-x64", "macos": "macosx-ub"}[
             platform
         ]
-    elif version == "0.9.0" and platform == "macos":
+    elif parsed_version[0] == 9 or parsed_version[0] == 10:
         platform = "macosx-x64"
 
     if version == "11.0":
-        # Why? I don't know.
-        filename = "love-11.0.0-{}.zip".format(platform)
-    else:
-        filename = "love-{}-{}.zip".format(version, platform)
-    return url + filename
+        version = "11.0.0"
+
+    return "{}/love-{}-{}.zip".format(url, version, platform)
