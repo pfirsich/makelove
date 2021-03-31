@@ -66,13 +66,25 @@ prebuild = [
 ]
 postbuild = [
 	# {build_directory} and {version} will be replaced
-	# This is obviously only for illustrative purposes, you will probaly want to wrap this in a script
-	"butler push {build_directory}/win32/SuperGame-win32.zip pfirsich/supergame:win32 --userversion {version}",
+	# Assuming you have a publish_build script:
+	"publish_build --buildversion {version} --directory {build_directory}/win32/SuperGame-win32.zip",
 ]
 
 [hooks.parameters]
 # This section will not be checked when the config is validated and may contain
 # anything. It is intended as a place for configuration for your hooks.
+
+[butler]
+# Automatically push built targets to itch.io after builds.
+# Requires butler installed and in your PATH. See https://itch.io/docs/butler/
+#
+# For lovejs builds, "Kind of project" must be set to "HTML" on itch.io. After
+# your first upload, set your lovejs build to be played in the browser.
+itchapp = "pfirsich/supergame"
+
+# Additionally publish the .love file. Great for Linux users or people having
+# problems with the love binaries.
+publish_love = true
 
 [windows]
 # This is the same as archive_files at the top level, but will be added to the archive additionally
