@@ -34,7 +34,7 @@ love_version = "11.3"
 # The targets specified here are used if no targets are passed when makelove is invoked.
 # If you are on Linux, the default value is ["win32", "win64", "appimage"]
 # If you are on another OS, the default value is ["win32", "win64"]
-default_targets = ["win32", "win64", "appimage", "macos"] # <- possible values for now
+default_targets = ["win32", "win64", "appimage", "lovejs", "macos"] # <- possible values for now
 
 # By default this is "makelove-build"
 build_directory = "bauwerke"
