@@ -68,11 +68,13 @@ def build_lovejs(config, version, target, target_directory, love_file_path):
             }
         ]
 
-        prefix = Path(love_binary_zip.filelist[0].filename)
+        prefix = love_binary_zip.filelist[0].filename
+        if not prefix.endswith("/"):
+            prefix = prefix + "/"
         app_zip.writestr(
             f"{config['name']}/index.html",
             render_mustache(
-                love_binary_zip.read(str(prefix / "src" / "compat" / "index.html")),
+                love_binary_zip.read(prefix + "src/compat/index.html"),
                 {
                     "title": config.get("lovejs", {}).get("title", config["name"]),
                     "arguments": json.dumps(["./game.love"]),
@@ -83,7 +85,7 @@ def build_lovejs(config, version, target, target_directory, love_file_path):
         app_zip.writestr(
             f"{config['name']}/game.js",
             render_mustache(
-                love_binary_zip.read(str(prefix / "src" / "game.js")),
+                love_binary_zip.read(prefix + "src/game.js"),
                 {
                     "create_file_paths": "",
                     "metadata": json.dumps(
@@ -99,17 +101,17 @@ def build_lovejs(config, version, target, target_directory, love_file_path):
         app_zip.writestr(f"{config['name']}/game.data", game_data)
         app_zip.writestr(
             f"{config['name']}/love.js",
-            love_binary_zip.read(str(prefix / "src" / "compat" / "love.js")),
+            love_binary_zip.read(prefix + "src/compat/love.js"),
         )
         app_zip.writestr(
             f"{config['name']}/love.wasm",
-            love_binary_zip.read(str(prefix / "src" / "compat" / "love.wasm")),
+            love_binary_zip.read(prefix + "src/compat/love.wasm"),
         )
         app_zip.writestr(
             f"{config['name']}/theme/love.css",
-            love_binary_zip.read(str(prefix / "src" / "compat" / "theme" / "love.css")),
+            love_binary_zip.read(prefix + "src/compat/theme/love.css"),
         )
         app_zip.writestr(
             f"{config['name']}/theme/bg.png",
-            love_binary_zip.read(str(prefix / "src" / "compat" / "theme" / "bg.png")),
+            love_binary_zip.read(prefix + "src/compat/theme/bg.png"),
         )
