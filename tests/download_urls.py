@@ -14,9 +14,11 @@ platform_versions = {
 for platform in ["win32", "win64", "macos"]:
     for version in platform_versions[platform]:
         url = get_download_url(version, platform)
+        assert platform[:3] in url
         try:
             resp = urlopen(Request(url, method="HEAD"))
             code = resp.status
         except HTTPError as exc:
             code = exc.code
-        print("{} {}: {}".format(platform, version, code))
+        assert code == 200
+        print("{} {}: {} => {}".format(platform, version, url, code))

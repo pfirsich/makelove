@@ -88,7 +88,7 @@ def get_download_url(version, platform):
         platform = {"win32": "win-x86", "win64": "win-x64", "macos": "macosx-ub"}[
             platform
         ]
-    elif parsed_version[0] == 9 or parsed_version[0] == 10:
+    elif platform == "macos" and (parsed_version[0] == 9 or parsed_version[0] == 10):
         platform = "macosx-x64"
 
     if version == "11.0":
