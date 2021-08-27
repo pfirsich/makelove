@@ -118,12 +118,15 @@ def load_config_file(path):
 
 
 def is_inside_git_repo():
-    return (
-        subprocess.run(
-            ["git", "rev-parse", "--is-inside-work-tree"], capture_output=True
-        ).returncode
-        == 0
-    )
+    try:
+        return (
+            subprocess.run(
+                ["git", "rev-parse", "--is-inside-work-tree"], capture_output=True
+            ).returncode
+            == 0
+        )
+    except FileNotFoundError:  # git is not installed
+        return False
 
 
 def guess_name():
