@@ -119,6 +119,25 @@ def git_ls_tree(path=".", visited=None):
     return out
 
 
+def git_ls_files(path="."):
+    """List files tracked by git using ls-files using paths relative to the
+    input path. Includes files in submodules. Doesn't resolve symlinks (?).
+
+    git_ls_files(str) -> [str]
+    """
+    p = os.path
+
+    path = "."
+    ls_tree = (
+        subprocess.check_output(
+            ["git", "ls-files", "--recurse-submodules", "--abbrev=0", "HEAD", path], cwd=path
+        )
+        .decode("utf-8")
+        .splitlines()
+    )
+    return [p.join(path, item) for item in ls_tree]
+
+
 def assemble_game_directory(args, config, game_directory):
     if os.path.isdir(game_directory):
         shutil.rmtree(game_directory)
@@ -127,6 +146,13 @@ def assemble_game_directory(args, config, game_directory):
     for rule in config["love_files"]:
         if rule == "+::git-ls-tree::" or rule == "::git-ls-tree::":
             ls_tree = git_ls_tree(".")
+            for item in ls_tree:
+                try:
+                    file_list.include_raw(item)
+                except FileNotFoundError:
+                    sys.exit("Could not find git-tracked file '{}'".format(item))
+        elif rule == "+::git-ls-files::" or rule == "::git-ls-files::":
+            ls_tree = git_ls_files(".")
             for item in ls_tree:
                 try:
                     file_list.include_raw(item)
