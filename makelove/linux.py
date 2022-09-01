@@ -19,16 +19,35 @@ def get_appimagetool_path():
 
 
 def download_love_appimage(version):
+    parsed_version = parse_love_version(version)
+
+    # If we're building for 11.4 or later, use the official appimages.
+    if parsed_version[0] >= 11:
+        if parsed_version[1] >= 4:
+            return download_official_appimage(version)
+
+    return download_legacy_appimage(version)
+
+
+def download_official_appimage(version):
+    url = f"https://api.github.com/repos/love2d/love/releases/tags/{version}"
+    asset_data = get_release_asset_list(url)
+
+    matching_asset = next((a for a in asset_data if a["name"] == f"love-{version}-x86_64.AppImage"), None)
+
+    if not matching_asset:
+        sys.exit(f"Could not find AppImage to download for {version}!")
+
+    return download_appimage(matching_asset["browser_download_url"])
+
+
+def download_legacy_appimage(version):
     latest_url = "https://api.github.com/repos/pfirsich/love-appimages/releases/latest"
-    try:
-        with urlopen(latest_url) as req:
-            data = json.loads(req.read().decode())
-    except Exception as exc:
-        sys.exit("Could not retrieve asset list: {}".format(exc))
+    asset_data = get_release_asset_list(latest_url)
 
     Asset = namedtuple("Asset", ["name", "version", "download_url"])
     appimages = []
-    for asset in data["assets"]:
+    for asset in asset_data:
         m = re.match(r"love[-_]((?:\d+[_.])+\d+)[-_.].*", asset["name"])
         if m:
             appimage_version = parse_love_version(m.group(1))
@@ -54,16 +73,30 @@ def download_love_appimage(version):
         if not ask_yes_no("Use {} instead?".format(download_asset.name), default=True):
             sys.exit("Aborting.")
 
+    return download_appimage(download_asset.download_url)
+
+
+def get_release_asset_list(url):
+    try:
+        with urlopen(url) as req:
+            data = json.loads(req.read().decode())
+    except Exception as exc:
+        sys.exit("Could not retrieve asset list: {}".format(exc))
+
+    return data["assets"]
+
+
+def download_appimage(url):
     try:
         appimage_path = tmpfile(suffix=".AppImage")
-        print("Downloading {}..".format(download_asset.download_url))
-        urlretrieve(download_asset.download_url, appimage_path)
+        print("Downloading {}..".format(url))
+        urlretrieve(url, appimage_path)
         os.chmod(appimage_path, 0o755)
         return appimage_path
     except Exception as exc:
         sys.exit(
             "Could not download löve appimage from {}: {}".format(
-                download_asset.download_url, exc
+                url, exc
             )
         )
 
@@ -104,6 +137,7 @@ def build_linux(config, version, target, target_directory, love_file_path):
     else:
         assert "love_version" in config
         # Download it every time, in case it's updated (I might make them smaller)
+        # TODO: this shouldn't be necessary anymore if we're downloading from the official love repo
         source_appimage = download_love_appimage(config["love_version"])
 
     print("Extracting source AppImage '{}'..".format(source_appimage))
