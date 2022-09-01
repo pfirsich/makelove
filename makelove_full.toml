@@ -29,7 +29,7 @@ love_files = [
 
 # This version is optional and will be read from conf.lua, if possible.
 # This is usually good enough and you do not need to specify this.
-love_version = "11.3"
+love_version = "11.4"
 
 # The targets specified here are used if no targets are passed when makelove is invoked.
 # If you are on Linux, the default value is ["win32", "win64", "appimage"]
