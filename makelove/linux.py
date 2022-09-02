@@ -121,16 +121,6 @@ def get_appimagetool():
             sys.exit("Could not download appimagetool from {}: {}".format(url, exc))
 
 
-def replace_single(string, pat, subst):
-    matches = [m for m in re.finditer(re.escape(pat), string)]
-    if len(matches) == 0:
-        sys.exit("Could not find pattern '{}'".format(pat))
-    elif len(matches) > 1:
-        sys.exit("Multiple matches for pattern '{}'".format(pat))
-    else:
-        return string.replace(pat, subst)
-
-
 def build_linux(config, version, target, target_directory, love_file_path):
     if target in config and "source_appimage" in config[target]:
         source_appimage = config[target]["source_appimage"]
