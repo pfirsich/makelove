@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="makelove",
-    version="0.0.9",
+    version="0.0.10",
     author="Joel Schumacher",
     author_email="joelschum@gmail.com",
     description="A packaging tool for [löve](https://love2d.org) games",
@@ -20,5 +20,7 @@ setuptools.setup(
     ],
     python_requires=">=3.7",
     install_requires=["Pillow>=7.0", "appdirs>=1.4.3", "toml>=0.10"],
-    entry_points={"console_scripts": ["makelove=makelove.makelove:main"],},
+    entry_points={
+        "console_scripts": ["makelove=makelove.makelove:main"],
+    },
 )
