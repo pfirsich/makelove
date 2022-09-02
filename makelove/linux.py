@@ -33,7 +33,9 @@ def download_official_appimage(version):
     url = f"https://api.github.com/repos/love2d/love/releases/tags/{version}"
     asset_data = get_release_asset_list(url)
 
-    matching_asset = next((a for a in asset_data if a["name"] == f"love-{version}-x86_64.AppImage"), None)
+    matching_asset = next(
+        (a for a in asset_data if a["name"] == f"love-{version}-x86_64.AppImage"), None
+    )
 
     if not matching_asset:
         sys.exit(f"Could not find AppImage to download for {version}!")
@@ -94,11 +96,7 @@ def download_appimage(url):
         os.chmod(appimage_path, 0o755)
         return appimage_path
     except Exception as exc:
-        sys.exit(
-            "Could not download löve appimage from {}: {}".format(
-                url, exc
-            )
-        )
+        sys.exit("Could not download löve appimage from {}: {}".format(url, exc))
 
 
 def get_appimagetool():
