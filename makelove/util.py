@@ -95,3 +95,10 @@ def get_download_url(version, platform):
         version = "11.0.0"
 
     return "{}/love-{}-{}.zip".format(url, version, platform)
+
+
+def fuse_files(dest_path, *src_paths):
+    with open(dest_path, "wb") as fused:
+        for path in src_paths:
+            with open(path, "rb") as f:
+                fused.write(f.read())
