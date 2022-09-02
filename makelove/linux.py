@@ -104,19 +104,21 @@ def get_appimagetool():
     if which_appimagetool:
         return which_appimagetool
     else:
-        appimage_path = os.path.join(appdirs.user_cache_dir("makelove"), "appimagetool")
-        if os.path.isfile(appimage_path):
-            return appimage_path
+        appimagetool_path = os.path.join(
+            appdirs.user_cache_dir("makelove"), "appimagetool"
+        )
+        if os.path.isfile(appimagetool_path):
+            return appimagetool_path
 
         url = "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
         try:
-            os.makedirs(os.path.dirname(appimage_path), exist_ok=True)
+            os.makedirs(os.path.dirname(appimagetool_path), exist_ok=True)
             print("Downloading '{}'..".format(url))
-            urlretrieve(url, appimage_path)
-            os.chmod(appimage_path, 0o755)
-            return appimage_path
+            urlretrieve(url, appimagetool_path)
+            os.chmod(appimagetool_path, 0o755)
+            return appimagetool_path
         except URLError as exc:
-            sys.exit("Could not download löve appimage from {}: {}".format(url, exc))
+            sys.exit("Could not download appimagetool from {}: {}".format(url, exc))
 
 
 def replace_single(string, pat, subst):
