@@ -17,12 +17,13 @@ def execute_hook(command, config, version, targets, build_directory):
     with open(tmp_config_path, "w") as f:
         toml.dump(config, f)
 
-    env = {
+    env = os.environ.copy()
+    env.update({
         "MAKELOVE_TEMP_CONFIG": tmp_config_path,
         "MAKELOVE_VERSION": version or "",
         "MAKELOVE_TARGETS": ",".join(targets),
         "MAKELOVE_BUILD_DIRECTORY": build_directory,
-    }
+    })
 
     command_replaced = command.format(
         version=version or "", build_directory=build_directory
