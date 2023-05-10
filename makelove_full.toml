@@ -39,6 +39,10 @@ default_targets = ["win32", "win64", "appimage", "lovejs", "macos"] # <- possibl
 # By default this is "makelove-build"
 build_directory = "bauwerke"
 
+# If specified, love's license file will be replaced by the one specified.
+# Only applies to windows and macos builds.
+license = "license.txt"
+
 # This icon file will be used for the executables and the appimage.
 # The executable requires an .ico or a file that can be read by Pillow (Python library).
 # The appimage requires a .png, an .svg or anything Pillow can load.
