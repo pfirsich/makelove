@@ -47,6 +47,7 @@ config_params = {
     "love_version": val.Choice(*all_love_versions),
     "default_targets": val.List(val.Choice(*all_targets)),
     "build_directory": val.Path(),
+    "license": val.Path(),
     "icon_file": val.Path(),
     "love_files": val.List(val.Path()),
     "keep_game_directory": val.Bool(),
