@@ -205,6 +205,9 @@ def build_macos(config, version, target, target_directory, love_file_path):
                     zipinfo.filename, get_info_plist_content(config, version)
                 )
                 continue
+            elif orig_filename == "love.app/Contents/Resources/license.txt" and "license" in config:
+                with open(config["license"], "r") as license_file:
+                    content = license_file.read()
             else:
                 content = love_binary_zip.read(orig_filename)
 
