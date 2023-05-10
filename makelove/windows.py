@@ -223,7 +223,11 @@ def build_windows(config, version, target, target_directory, love_file_path):
                 fused.write(loveExe.read())
                 fused.write(loveZip.read())
 
-    copy("license.txt")
+    if "license" in config:
+        shutil.copyfile(config["license"], dest("license.txt"))
+    else:
+        copy("license.txt")
+    
     for f in os.listdir(love_binaries):
         if f.endswith(".dll"):
             copy(f)
