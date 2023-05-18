@@ -48,7 +48,7 @@ icon_file = "icon.png"
 # the temporary game directory will be deleted, unless this parameter is true
 keep_game_directory = false
 
-# This specifies the files to be included in the zip archives generated for windows builds.
+# This specifies the files to be included in the zip archives generated for windows and macos builds.
 # The key is the relative (to the game directory) source path
 # and the value is the destination path relative to the archive root.
 # You may specify files or directories
@@ -114,6 +114,9 @@ artifacts = "archive"
 # The values above for the target win32 can also be set for the win64 target
 
 [macos]
+# This is the same as archive_files at the top level, but will be added to the archive additionally
+[macos.archive_files]
+
 # optionally, you can include a mac-specific icon, if not mac will use the same icon as other targets
 icon_file = "macIcon.png"  # or macIcon.icns
 
