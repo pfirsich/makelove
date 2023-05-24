@@ -183,23 +183,23 @@ def build_macos(config, version, target, target_directory, love_file_path):
             archive_files.update(config["macos"]["archive_files"])
         
         written_files = set()
-        for k, v in archive_files.items():
-            path = f"{config['name']}.app/Contents/Resources/{v}"
-            if os.path.isfile(k):
-                with open(k, "rb") as file:
+        for src_path, dest_path in archive_files.items():
+            path = f"{config['name']}.app/Contents/Resources/{dest_path}"
+            if os.path.isfile(src_path):
+                with open(src_path, "rb") as file:
                     app_zip.writestr(path, file.read())
-            elif os.path.isdir(k):
-                directory = Path(k)
+            elif os.path.isdir(src_path):
+                directory = Path(src_path)
                 for file_path in directory.glob("**/*"):
                     if not file_path.is_file():
                         continue
                     with open(file_path, "rb") as file:
-                        relative = file_path.relative_to(k)
-                        path = f"{config['name']}.app/Contents/Resources/{v}/{relative}"
+                        relative = file_path.relative_to(src_path)
+                        path = f"{config['name']}.app/Contents/Resources/{dest_path}/{relative}"
                         app_zip.writestr(path, file.read())
                         written_files.add(path)
             else:
-                sys.exit(f"Cannot copy archive file '{k}'")
+                sys.exit(f"Cannot copy archive file '{src_path}'")
             written_files.add(path)
 
         for zipinfo in love_binary_zip.infolist():
