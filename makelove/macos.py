@@ -217,7 +217,7 @@ def build_macos(config, version, target, target_directory, love_file_path):
             zipinfo.date_time = tuple(datetime.now().timetuple()[:6])
 
             if zipinfo.filename in written_files:
-                continue  # avoid duplicates
+                continue  # don't make a duplicate of a file already inserted by archive_files
             elif orig_filename == "love.app/Contents/Resources/GameIcon.icns":
                 continue  # not needed for game distributions
             elif orig_filename == "love.app/Contents/Resources/Assets.car":
