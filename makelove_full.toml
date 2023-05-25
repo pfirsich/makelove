@@ -48,10 +48,12 @@ icon_file = "icon.png"
 # the temporary game directory will be deleted, unless this parameter is true
 keep_game_directory = false
 
-# This specifies the files to be included in the zip archives generated for windows and macos builds.
-# The key is the relative (to the game directory) source path
-# and the value is the destination path relative to the archive root.
-# You may specify files or directories
+# This section specifies additional files to be distributed alongside the game, but
+# not as part of the .love file. See the platform specific versions of this section
+# for details on their specific handling.
+# The key is the relative (to the game directory) source path and the value is the
+# destination path relative to the archive root.
+# You may specify files or directories.
 [archive_files]
 "foo/bar/README.md" = "README.md"
 "baz/baz/licenses" = "licenses" # directory
@@ -75,7 +77,8 @@ postbuild = [
 # anything. It is intended as a place for configuration for your hooks.
 
 [windows]
-# This is the same as archive_files at the top level, but will be added to the archive additionally
+# The files specified here will be added in addition to the ones specified on top level.
+# All specified files will simply be added to the .zip archive.
 [windows.archive_files]
 
 # Exe metadata is specified as a version string (key) and it's value
@@ -114,8 +117,8 @@ artifacts = "archive"
 # The values above for the target win32 can also be set for the win64 target
 
 [macos]
-# This is the same as archive_files at the top level, but will be added to the archive additionally
-# (these files will be added in <name>/Contents/Resources/)
+# The files specified here will be added in addition to the ones specified on top level.
+# All specified files will be copied to the <name>/Contents/Resources/ directory of the .app file.
 [macos.archive_files]
 
 # optionally, you can include a mac-specific icon, if not mac will use the same icon as other targets
