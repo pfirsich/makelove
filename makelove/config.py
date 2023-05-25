@@ -93,6 +93,7 @@ config_params = {
             "love_binaries": val.Path(),
             "icon_file": val.Path(),
             "app_metadata": val.Dict(val.String(), val.String()),
+            "archive_files": val.Dict(val.Path(), val.Path()),
         }
     ),
     "lovejs": val.Section(

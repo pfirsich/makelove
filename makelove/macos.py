@@ -3,6 +3,7 @@ import os
 import plistlib
 import struct
 import sys
+from pathlib import Path
 from datetime import datetime
 from zipfile import ZipFile
 from urllib.request import urlopen, urlretrieve, URLError
@@ -175,6 +176,32 @@ def build_macos(config, version, target, target_directory, love_file_path):
         love_file_path, "rb"
     ) as love_zip:
 
+        archive_files = {}
+        if "archive_files" in config:
+            archive_files.update(config["archive_files"])
+        if "macos" in config and "archive_files" in config["macos"]:
+            archive_files.update(config["macos"]["archive_files"])
+        
+        written_files = set()
+        for src_path, dest_path in archive_files.items():
+            path = f"{config['name']}.app/Contents/Resources/{dest_path}"
+            if os.path.isfile(src_path):
+                with open(src_path, "rb") as file:
+                    app_zip.writestr(path, file.read())
+            elif os.path.isdir(src_path):
+                directory = Path(src_path)
+                for file_path in directory.glob("**/*"):
+                    if not file_path.is_file():
+                        continue
+                    with open(file_path, "rb") as file:
+                        relative = file_path.relative_to(src_path)
+                        path = f"{config['name']}.app/Contents/Resources/{dest_path}/{relative}"
+                        app_zip.writestr(path, file.read())
+                        written_files.add(path)
+            else:
+                sys.exit(f"Cannot copy archive file '{src_path}'")
+            written_files.add(path)
+
         for zipinfo in love_binary_zip.infolist():
             if not zipinfo.filename.startswith("love.app/"):
                 eprint("Got bad or unxpexpectedly formatted love zip file")
@@ -189,7 +216,9 @@ def build_macos(config, version, target, target_directory, love_file_path):
             # makes the modification time on the app correct
             zipinfo.date_time = tuple(datetime.now().timetuple()[:6])
 
-            if orig_filename == "love.app/Contents/Resources/GameIcon.icns":
+            if zipinfo.filename in written_files:
+                continue  # don't make a duplicate of a file already inserted by archive_files
+            elif orig_filename == "love.app/Contents/Resources/GameIcon.icns":
                 continue  # not needed for game distributions
             elif orig_filename == "love.app/Contents/Resources/Assets.car":
                 continue  # not needed for game distributions
