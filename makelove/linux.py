@@ -22,9 +22,8 @@ def download_love_appimage(version):
     parsed_version = parse_love_version(version)
 
     # If we're building for 11.4 or later, use the official appimages.
-    if parsed_version[0] >= 11:
-        if parsed_version[1] >= 4:
-            return download_official_appimage(version)
+    if (parsed_version[0], parsed_version[1]) >= (11, 4):
+        return download_official_appimage(version)
 
     return download_legacy_appimage(version)
 
