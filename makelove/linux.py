@@ -123,6 +123,9 @@ def get_appimagetool():
 def build_linux(config, version, target, target_directory, love_file_path):
     if target in config and "source_appimage" in config[target]:
         source_appimage = config[target]["source_appimage"]
+        # We need to set the cwd to our extraction destination, so we need to turn this into an absolute path
+        if not os.path.isabs(source_appimage):
+            source_appimage = os.path.join(os.getcwd(), source_appimage)
     else:
         assert "love_version" in config
         # Download it every time, in case it's updated (I might make them smaller)
