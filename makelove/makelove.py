@@ -54,7 +54,7 @@ def get_build_log_path(build_directory):
     return os.path.join(build_directory, ".makelove-buildlog")
 
 
-def prepare_build_directory(args, config, version):
+def prepare_build_directory(args, config, version, targets):
     assert "build_directory" in config
     build_directory = config["build_directory"]
     versioned_build = version != None
@@ -67,7 +67,7 @@ def prepare_build_directory(args, config, version):
     if os.path.isdir(build_directory):
         # If no version is specified, overwrite by default
         built_targets = os.listdir(build_directory)
-        building_target_again = any(target in built_targets for target in args.targets)
+        building_target_again = any(target in built_targets for target in targets)
         # If the targets being built have not been built before, it should be fine to not do anything
         # The deletion/creation of the target directories is handled in main() (they are just deleted if they exist).
         if versioned_build and building_target_again and not args.force:
@@ -281,9 +281,9 @@ def main():
         print("Exiting because --check was passed.")
         sys.exit(0)
 
-    build_directory = prepare_build_directory(args, config, version)
-
     targets = get_targets(args, config)
+
+    build_directory = prepare_build_directory(args, config, version, targets)
 
     if sys.platform.startswith("win") and "appimage" in targets:
         sys.exit("Currently AppImages can only be built on Linux and WSL2!")
