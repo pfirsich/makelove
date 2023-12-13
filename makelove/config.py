@@ -14,6 +14,7 @@ default_config_name = "makelove.toml"
 all_targets = ["win32", "win64", "appimage", "macos", "lovejs"]
 
 all_love_versions = [
+    "11.5",
     "11.4",
     "11.3",
     "11.2",
