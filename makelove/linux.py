@@ -92,7 +92,6 @@ def download_appimage(url):
         appimage_path = tmpfile(suffix=".AppImage")
         print("Downloading {}..".format(url))
         urlretrieve(url, appimage_path)
-        os.chmod(appimage_path, 0o755)
         return appimage_path
     except Exception as exc:
         sys.exit("Could not download löve appimage from {}: {}".format(url, exc))
@@ -131,6 +130,7 @@ def build_linux(config, version, target, target_directory, love_file_path):
         # Download it every time, in case it's updated (I might make them smaller)
         # TODO: this shouldn't be necessary anymore if we're downloading from the official love repo
         source_appimage = download_love_appimage(config["love_version"])
+    os.chmod(source_appimage, 0o755)
 
     print("Extracting source AppImage '{}'..".format(source_appimage))
     ret = subprocess.run(
