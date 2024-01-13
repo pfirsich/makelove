@@ -10,6 +10,7 @@ import zipfile
 import re
 import pkg_resources
 
+from .butler import publish
 from .config import get_config, all_targets, init_config_assistant
 from .hooks import execute_hook
 from .filelist import FileList
@@ -89,6 +90,20 @@ def execute_hooks(hook, config, version, targets, build_directory):
             )
             config.clear()
             config.update(new_config)
+
+
+def execute_butler(config, version, targets, build_directory):
+    # Flush so makelove build output is shown before butler errors or output.
+    sys.stdout.flush()
+    if "butler" not in config:
+        return
+    butler_cfg = config["butler"]
+    if "itchapp" not in butler_cfg:
+        # Skipping butler publish because itchapp parameter is missing:
+        # itchapp = "username/gamename"
+        return
+    itchapp = butler_cfg["itchapp"]
+    publish(itchapp, butler_cfg, version, targets, build_directory)
 
 
 def git_ls_tree(path=".", visited=None):
@@ -356,6 +371,8 @@ def main():
 
     if not "postbuild" in args.disabled_hooks:
         execute_hooks("postbuild", config, version, targets, build_directory)
+
+    execute_butler(config, version, targets, build_directory)
 
     if version != None:
         with JsonFile(build_log_path, indent=4) as build_log:

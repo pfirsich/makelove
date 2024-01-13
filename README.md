@@ -10,12 +10,13 @@ A packaging tool for [löve](https://love2d.org) games
 * Proper handling of shared libraries (both Lua modules and FFI)!
 * Packaging of those binaries in archives, including extra files
 * Versioned builds
+* Publish to [itch.io](https://itch.io) via butler
 * Control and customization along the way:
     - Configure which targets to build
     - Which files to include in the .love with a list of include/exclude patterns
     - Which löve binaries or AppImage to use as the base
     - Which artifacts to generate or keep
-    - pre- and postbuild hooks that are able to change the configuration on the fly. For example you can decide dynamically which files to include in the .love (e.g. through parsing asset lists), inject build metadata or just to upload your build automatically afterwards (e.g. via butler to [itch.io](https://itch.io)))
+    - pre- and postbuild hooks that are able to change the configuration on the fly. For example, you can decide dynamically which files to include in the .love (e.g. through parsing asset lists), inject build metadata, or just to upload your build automatically afterwards (e.g. via [steamcmd](https://partner.steamgames.com/doc/sdk/uploading) to Steam)
 
 ## Quickstart
 
