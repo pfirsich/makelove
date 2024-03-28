@@ -70,6 +70,7 @@ config_params = {
             "love_binaries": val.Path(),
             "shared_libraries": val.List(val.Path()),
             "artifacts": val.ValueOrList(val.Choice("directory", "archive")),
+            "compile_lua": val.Bool(),
         }
     ),
     "win64": val.Section(
@@ -77,6 +78,7 @@ config_params = {
             "love_binaries": val.Path(),
             "shared_libraries": val.List(val.Path()),
             "artifacts": val.ValueOrList(val.Choice("directory", "archive")),
+            "compile_lua": val.Bool(),
         }
     ),
     "linux": val.Section(

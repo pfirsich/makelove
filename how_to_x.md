@@ -35,3 +35,12 @@ And finally build without prebuild, but with postbuild
 ```
 makelove -d prebuild -v 1.2.3 appimage (--resume)
 ```
+
+## Compile lua scripts to bytecode
+Use the option `compile_lua = true` in `makelove.toml` in the `win32` or `win64` sections.
+The created .exe will now contain bytecode instead of scripts.
+
+To check if a script is compiled as bytecode, you can add this code to your game:
+```lua
+is_compiled = (love.filesystem.read('main.lua', 1) == '\x1b' and true or false)
+```

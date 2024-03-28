@@ -114,6 +114,11 @@ shared_libraries = [
 # after the .zip has been built.
 artifacts = "archive"
 
+# Whether or not to compile lua code to bytecode.
+# If this option is set to true, the build needs to run on windows, because love.exe for windows
+# is used to compile the lua files.
+compile_lua = false
+
 # The values above for the target win32 can also be set for the win64 target
 
 [macos]

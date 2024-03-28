@@ -10,6 +10,7 @@ A packaging tool for [löve](https://love2d.org) games
 * Proper handling of shared libraries (both Lua modules and FFI)!
 * Packaging of those binaries in archives, including extra files
 * Versioned builds
+* Precompile lua scripts to bytecode (win32 and win64 and only on Windows)
 * Control and customization along the way:
     - Configure which targets to build
     - Which files to include in the .love with a list of include/exclude patterns

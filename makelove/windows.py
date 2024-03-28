@@ -11,6 +11,7 @@ import appdirs
 
 from .util import get_default_love_binary_dir, get_download_url, tmpfile, eprint
 from .config import should_build_artifact
+from .bytecode import create_compiled_lovezip
 
 
 def common_prefix(l):
@@ -217,11 +218,26 @@ def build_windows(config, version, target, target_directory, love_file_path):
         )
         print("If you are using a POSIX-compliant system, try installing WINE.")
 
+    temp_love_archive = None
+    if config[target].get("compile_lua", False):
+        if not sys.platform.startswith("win32"):
+            # TODO: For x64 targets we could try to grab the win64 binary?
+            sys.exit("Cannot compile lua on this platform, please run me on windows")
+        original_love_file = love_file_path
+        temp_love_archive = dest("compiled.love")
+        create_compiled_lovezip(src("love_orig.exe"), original_love_file, temp_love_archive)
+        # Fuse with the generated archive instead the original one
+        love_file_path = temp_love_archive
+
     with open(target_exe_path, "wb") as fused:
         with open(src("love.exe"), "rb") as loveExe:
             with open(love_file_path, "rb") as loveZip:
                 fused.write(loveExe.read())
                 fused.write(loveZip.read())
+
+    # Did we create a temp file?
+    if temp_love_archive:
+        os.remove(temp_love_archive)
 
     copy("license.txt")
     for f in os.listdir(love_binaries):
