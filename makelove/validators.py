@@ -89,6 +89,18 @@ class Command(object):
         return "Command"
 
 
+class UserProjectPair(object):
+    def validate(self, obj):
+        if not isinstance(obj, str):
+            raise ValueError
+        if '/' not in obj:
+            raise ValueError
+        return obj
+
+    def description(self):
+        return "A username and project name separated by a slash (username/gamename)."
+
+
 class List(object):
     def __init__(self, value_validator):
         self.value_validator = value_validator

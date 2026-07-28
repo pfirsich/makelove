@@ -59,6 +59,12 @@ config_params = {
             "parameters": val.Dict(val.Any(), val.Any()),
         }
     ),
+    "butler": val.Section(
+        {
+            "itchapp": val.UserProjectPair(),
+            "publish_love": val.Bool(),
+        }
+    ),
     "windows": val.Section(
         {
             "exe_metadata": val.Dict(val.String(), val.String()),
