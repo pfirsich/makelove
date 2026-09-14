@@ -104,6 +104,8 @@ config_params = {
         {
             "title": val.String(),
             "memory": val.String(),
+            "index_file": val.Path(),
+            "theme_directory": val.Path(),
         }
     ),
 }

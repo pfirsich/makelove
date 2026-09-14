@@ -156,3 +156,5 @@ artifacts = "appimage" # default is to delete the AppDir
 [lovejs]
 title = "Amazing Game"  # used on the resulting web page
 memory = "20000000"  # starting memory of the webpage (default is 20 MB)
+index_file = "web/index.html"  # mustache template for the generated page
+theme_directory = "web/theme"  # copied to theme/ in the generated archive

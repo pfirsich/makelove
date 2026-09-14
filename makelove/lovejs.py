@@ -40,6 +40,16 @@ def render_mustache(tmpl, cx):
     return tmpl.encode("utf-8")
 
 
+def write_theme_directory(app_zip, theme_directory):
+    if not os.path.isdir(theme_directory):
+        sys.exit(f"Cannot copy love.js theme directory '{theme_directory}'")
+    for root, _dirs, files in os.walk(theme_directory):
+        for filename in files:
+            path = os.path.join(root, filename)
+            relative_path = os.path.relpath(path, theme_directory).replace(os.sep, "/")
+            with open(path, "rb") as theme_file:
+                app_zip.writestr(f"theme/{relative_path}", theme_file.read())
+
 def build_lovejs(config, version, target, target_directory, love_file_path):
     if target in config and "love_binaries" in config[target]:
         love_binaries = config[target]["love_binaries"]
@@ -71,19 +81,24 @@ def build_lovejs(config, version, target, target_directory, love_file_path):
         prefix = love_binary_zip.filelist[0].filename
         if not prefix.endswith("/"):
             prefix = prefix + "/"
+        lovejs_config = config.get("lovejs", {})
         app_zip.writestr(
-            f"{config['name']}/index.html",
+            "index.html",
             render_mustache(
-                love_binary_zip.read(prefix + "src/compat/index.html"),
+                (
+                    Path(lovejs_config["index_file"]).read_bytes()
+                    if "index_file" in lovejs_config
+                    else love_binary_zip.read(prefix + "src/compat/index.html")
+                ),
                 {
-                    "title": config.get("lovejs", {}).get("title", config["name"]),
+                    "title": lovejs_config.get("title", config["name"]),
                     "arguments": json.dumps(["./game.love"]),
-                    "memory": int(config.get("lovejs", {}).get("memory", "20000000")),
+                    "memory": int(lovejs_config.get("memory", "20000000")),
                 },
             ),
         )
         app_zip.writestr(
-            f"{config['name']}/game.js",
+            "game.js",
             render_mustache(
                 love_binary_zip.read(prefix + "src/game.js"),
                 {
@@ -98,20 +113,24 @@ def build_lovejs(config, version, target, target_directory, love_file_path):
                 },
             ),
         )
-        app_zip.writestr(f"{config['name']}/game.data", game_data)
+        app_zip.writestr("game.data", game_data)
         app_zip.writestr(
-            f"{config['name']}/love.js",
+            "love.js",
             love_binary_zip.read(prefix + "src/compat/love.js"),
         )
         app_zip.writestr(
-            f"{config['name']}/love.wasm",
+            "love.wasm",
             love_binary_zip.read(prefix + "src/compat/love.wasm"),
         )
-        app_zip.writestr(
-            f"{config['name']}/theme/love.css",
-            love_binary_zip.read(prefix + "src/compat/theme/love.css"),
-        )
-        app_zip.writestr(
-            f"{config['name']}/theme/bg.png",
-            love_binary_zip.read(prefix + "src/compat/theme/bg.png"),
-        )
+        theme_directory = lovejs_config.get("theme_directory")
+        if theme_directory:
+            write_theme_directory(app_zip, theme_directory)
+        else:
+            app_zip.writestr(
+                "theme/love.css",
+                love_binary_zip.read(prefix + "src/compat/theme/love.css"),
+            )
+            app_zip.writestr(
+                "theme/bg.png",
+                love_binary_zip.read(prefix + "src/compat/theme/bg.png"),
+            )
