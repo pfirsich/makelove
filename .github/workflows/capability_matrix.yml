@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  capability:
+    name: Capability (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Wine
+        if: runner.os == 'Linux'
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y wine64 wine32:i386
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - uses: actions/cache@v4
+        with:
+          path: .makelove-cache
+          key: makelove-${{ runner.os }}
+
+      - name: Build wheel and sdist
+        run: |
+          python -m pip install build
+          python -m build
+
+      - name: List capability cases
+        run: python tests/capability_matrix.py --list
+
+      - name: Build and validate capability project
+        run: python tests/capability_matrix.py
+        env:
+          MAKELOVE_CI_CACHE: ${{ github.workspace }}/.makelove-cache

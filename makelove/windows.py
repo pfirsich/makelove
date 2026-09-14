@@ -42,12 +42,15 @@ def download_love(version, platform):
         )
         sys.exit(1)
 
-    # There is usually a single directory in the zip files
-    # Move the contents up one level, then delete the empty directory
-    subdir_path = os.path.join(target_path, os.listdir(target_path)[0])
-    for element in os.listdir(subdir_path):
-        shutil.move(os.path.join(subdir_path, element), target_path)
-    os.rmdir(subdir_path)
+    # Newer Windows zips usually contain a single top-level directory. Some
+    # older releases, such as 0.7.0, contain the binaries directly at zip root.
+    entries = os.listdir(target_path)
+    if len(entries) == 1:
+        subdir_path = os.path.join(target_path, entries[0])
+        if os.path.isdir(subdir_path):
+            for element in os.listdir(subdir_path):
+                shutil.move(os.path.join(subdir_path, element), target_path)
+            os.rmdir(subdir_path)
 
     print("Download complete")
 
@@ -170,7 +173,8 @@ def set_exe_metadata(exe_path, metadata, icon_file):
     if temp_ico_path:
         os.remove(temp_ico_path)
     if res.returncode != 0:
-        sys.exit("Could not set exe metadata:\n" + res.stderr.decode("utf-8"))
+        # On older Löve versions, Wine may fail here.
+        eprint("Could not set exe metadata:\n" + res.stderr.decode("utf-8"))
 
 
 def build_windows(config, version, target, target_directory, love_file_path):

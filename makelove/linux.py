@@ -178,12 +178,10 @@ def build_linux(config, version, target, target_directory, love_file_path):
         os.chmod(fused_exe_path, 0o755)
         os.remove(appdir("bin/love"))
 
-        # rename back to bin/love so love.sh can pick it up
-        parsed_version = parse_love_version(config["love_version"])
-        if (parsed_version[0], parsed_version[1]) >= (11, 4):
-            os.rename(fused_exe_path, appdir("bin/love"))
-
-        desktop_exec = f"{game_name} %f"
+        # Official LÖVE AppImages expect the fused executable at bin/love.
+        # The non-wrapper AppImage launcher invokes bin/love.
+        os.rename(fused_exe_path, appdir("bin/love"))
+        desktop_exec = "love %f"
     else:
         sys.exit(
             "Could not find love executable in AppDir. The AppImage has an unknown format."

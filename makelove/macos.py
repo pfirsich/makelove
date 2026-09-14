@@ -204,8 +204,12 @@ def build_macos(config, version, target, target_directory, love_file_path):
             written_archive_files.add(path)
 
         for zipinfo in love_binary_zip.infolist():
+            # Source zips (e.g.: love-0.9.1-macosx-x64.zip) contain __MACOSX which we do not want to include.
+            if zipinfo.filename.startswith("__MACOSX/"):
+                continue
+
             if not zipinfo.filename.startswith("love.app/"):
-                eprint("Got bad or unxpexpectedly formatted love zip file")
+                eprint("Got bad or unexpectedly formatted love zip file")
                 sys.exit(1)
 
             # for getting files out of the original love archive
@@ -251,4 +255,3 @@ def build_macos(config, version, target, target_directory, love_file_path):
         with ZipFile(dst, "r") as zip_ref:
             zip_ref.extractall(unzip_dst)
         os.remove(dst)
-    

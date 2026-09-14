@@ -1,0 +1,11 @@
+name = "CapabilityProject"
+love_version = "11.5"
+icon_file = "icon.png"
+default_targets = ["win32", "win64", "appimage", "macos", "lovejs"]
+build_directory = "build"
+
+love_files = [
+    "./main.lua",
+    "./conf.lua",
+    "./icon.png",
+]
