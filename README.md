@@ -25,6 +25,12 @@ To use makelove you need to install Python 3.8 or later and then execute (probab
 pip3 install makelove
 ```
 
+To install a local checkout as a command-line tool while developing it:
+
+```
+python3 -m pip install -e .
+```
+
 Then navigate to the directory containing the `main.lua` of your game (your game directory) and execute:
 
 ```
@@ -55,6 +61,22 @@ There are a number of arguments you can specify to customize the build (e.g. to 
 
 ```
 makelove --help
+```
+
+## Opening builds
+
+`--open` opens (Windows, Appimage) or serves (lovejs) builds:
+
+```
+makelove lovejs --open [IP[:PORT]]
+```
+
+By default `127.0.0.1:.8000` is used.
+
+Windows builds use `wine` on Linux. Override the launcher with `MAKELOVE_WINDOWS_OPEN_COMMAND`:
+
+```sh
+MAKELOVE_WINDOWS_OPEN_COMMAND='proton run' makelove win64 --open
 ```
 
 ## Configuration

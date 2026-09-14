@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 import argparse
-import os
-import shutil
-import sys
+import functools
+import http.server
 import json
+import os
+import re
+import shlex
+import shutil
+import socketserver
 import subprocess
+import sys
+import webbrowser
+import zipfile
 from email.utils import formatdate
 from importlib.metadata import PackageNotFoundError, version as package_version
-import zipfile
-import re
 
 from .config import get_config, all_targets, init_config_assistant
 from .hooks import execute_hook
@@ -20,6 +25,11 @@ from .macos import build_macos
 from .lovejs import build_lovejs
 
 all_hooks = ["prebuild", "postbuild"]
+
+
+class ReusableTCPServer(socketserver.TCPServer):
+    allow_reuse_address = True
+
 
 # Sadly argparse cannot handle nargs="*" and choices and will error if not at least one argument is provided
 def _choices(values):
@@ -192,6 +202,109 @@ def get_targets(args, config):
     return targets
 
 
+def extract_archive(archive_path, output_directory):
+    if os.path.isdir(output_directory):
+        shutil.rmtree(output_directory)
+    os.makedirs(output_directory)
+    with zipfile.ZipFile(archive_path) as archive:
+        archive.extractall(output_directory)
+
+
+def parse_open_address(value):
+    host, separator, port = value.partition(":")
+    if not separator:
+        return host, 8000
+    try:
+        port = int(port)
+        if not host or not 0 < port < 65536:
+            raise ValueError
+    except ValueError:
+        raise argparse.ArgumentTypeError("expected IP or IP:PORT")
+    return host, port
+
+
+def open_windows_build(config, target, target_directory):
+    archive_path = os.path.join(
+        target_directory, "{}-{}.zip".format(config["name"], target)
+    )
+    run_directory = os.path.join(target_directory, "open")
+
+    if os.path.isfile(archive_path):
+        extract_archive(archive_path, run_directory)
+    else:
+        print(f"Cannot open {target}: no archive or directory artifact was built.")
+        return
+
+    exe_path = os.path.abspath(
+        os.path.join(run_directory, "{}.exe".format(config["name"]))
+    )
+    if not os.path.isfile(exe_path):
+        print(f"Cannot open {target}: executable does not exist at '{exe_path}'.")
+        return
+
+    print(f"Opening {exe_path}")
+    command = shlex.split(
+        os.environ.get(
+            "MAKELOVE_WINDOWS_OPEN_COMMAND",
+            "wine" if sys.platform.startswith("linux") else "",
+        )
+    )
+    if not command and not sys.platform.startswith("win"):
+        sys.exit(
+            "Set MAKELOVE_WINDOWS_OPEN_COMMAND to open Windows builds on this platform."
+        )
+    command.append(exe_path)
+    subprocess.run(command, cwd=run_directory)
+
+
+def open_appimage_build(config, target_directory):
+    game_name = config["name"].replace(" ", "")
+    appimage_path = os.path.abspath(
+        os.path.join(target_directory, f"{game_name}.AppImage")
+    )
+    if not os.path.isfile(appimage_path):
+        print(f"Cannot open appimage: executable does not exist at '{appimage_path}'.")
+        return
+    print(f"Opening {appimage_path}")
+    subprocess.run([appimage_path], cwd=target_directory)
+
+
+def open_lovejs_build(config, target_directory, host, port):
+    archive_path = os.path.join(
+        target_directory, "{}-lovejs.zip".format(config["name"])
+    )
+    serve_directory = os.path.join(target_directory, config["name"])
+
+    if not os.path.isfile(archive_path):
+        print(f"Cannot open lovejs: archive does not exist at '{archive_path}'.")
+        return
+
+    extract_archive(archive_path, serve_directory)
+
+    handler = functools.partial(
+        http.server.SimpleHTTPRequestHandler, directory=serve_directory
+    )
+    with ReusableTCPServer((host, port), handler) as httpd:
+        url = f"http://{host}:{port}"
+        print(f"Serving lovejs build at {url}")
+        webbrowser.open(url)
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            pass
+
+
+def open_build(config, target, target_directory, open_address):
+    if target in ("win32", "win64"):
+        open_windows_build(config, target, target_directory)
+    elif target == "appimage":
+        open_appimage_build(config, target_directory)
+    elif target == "lovejs":
+        open_lovejs_build(config, target_directory, *open_address)
+    else:
+        print(f"--open is not supported for target {target}.")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="makelove")
     parser.add_argument(
@@ -226,6 +339,14 @@ def main():
         "--verbose",
         action="store_true",
         help="Display more information (files included in love archive)",
+    )
+    parser.add_argument(
+        "--open",
+        nargs="?",
+        const="127.0.0.1",
+        type=parse_open_address,
+        metavar="IP[:PORT]",
+        help="Open supported targets after building; serve lovejs on IP[:PORT].",
     )
     # Restrict version name format somehow? A git refname?
     parser.add_argument(
@@ -364,6 +485,14 @@ def main():
     if version != None:
         with JsonFile(build_log_path, indent=4) as build_log:
             build_log[-1]["completed"] = True
+
+    if args.open:
+        # Lovejs is opened last since it blocks the process with its web server
+        open_targets = sorted(targets, key=lambda target: target == "lovejs")
+        for target in open_targets:
+            open_build(
+                config, target, os.path.join(build_directory, target), args.open
+            )
 
 
 if __name__ == "__main__":
