@@ -72,7 +72,7 @@ def build_lovejs(config, version, target, target_directory, love_file_path):
         if not prefix.endswith("/"):
             prefix = prefix + "/"
         app_zip.writestr(
-            f"{config['name']}/index.html",
+            "index.html",
             render_mustache(
                 love_binary_zip.read(prefix + "src/compat/index.html"),
                 {
@@ -83,7 +83,7 @@ def build_lovejs(config, version, target, target_directory, love_file_path):
             ),
         )
         app_zip.writestr(
-            f"{config['name']}/game.js",
+            "game.js",
             render_mustache(
                 love_binary_zip.read(prefix + "src/game.js"),
                 {
@@ -98,20 +98,20 @@ def build_lovejs(config, version, target, target_directory, love_file_path):
                 },
             ),
         )
-        app_zip.writestr(f"{config['name']}/game.data", game_data)
+        app_zip.writestr("game.data", game_data)
         app_zip.writestr(
-            f"{config['name']}/love.js",
+            "love.js",
             love_binary_zip.read(prefix + "src/compat/love.js"),
         )
         app_zip.writestr(
-            f"{config['name']}/love.wasm",
+            "love.wasm",
             love_binary_zip.read(prefix + "src/compat/love.wasm"),
         )
         app_zip.writestr(
-            f"{config['name']}/theme/love.css",
+            "theme/love.css",
             love_binary_zip.read(prefix + "src/compat/theme/love.css"),
         )
         app_zip.writestr(
-            f"{config['name']}/theme/bg.png",
+            "theme/bg.png",
             love_binary_zip.read(prefix + "src/compat/theme/bg.png"),
         )
