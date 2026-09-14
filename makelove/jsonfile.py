@@ -2,7 +2,7 @@ import json
 import os
 
 
-class JsonFile(object):
+class JsonFile:
     def __init__(self, path, indent=None):
         self.path = path
         self.indent = indent

@@ -1,42 +1,31 @@
-import sys
 import os
 import shutil
-from zipfile import ZipFile
-from urllib.request import urlopen, urlretrieve, URLError
-from io import BytesIO
 import subprocess
+import sys
+from io import BytesIO
+from urllib.request import URLError, urlopen, urlretrieve
+from zipfile import ZipFile
 
-from PIL import Image, UnidentifiedImageError
 import appdirs
+from PIL import Image, UnidentifiedImageError
 
-from .util import get_default_love_binary_dir, get_download_url, tmpfile, eprint
 from .config import should_build_artifact
-from .hooks import execute_target_hook
-
-
-def common_prefix(l):
-    # This is all functional and cool, but entirely unreadable.
-    # Just trust that it does what the function name suggests it does.
-    return max(
-        l[0][:i]
-        for i in range(len(min(l, key=len)))
-        if all(name.startswith(l[0][:i]) for name in l)
-    )
+from .util import eprint, get_default_love_binary_dir, get_download_url, tmpfile
 
 
 def download_love(version, platform):
     target_path = get_default_love_binary_dir(version, platform)
-    print("Downloading love binaries to: '{}'".format(target_path))
+    print(f"Downloading love binaries to: '{target_path}'")
 
     os.makedirs(target_path, exist_ok=True)
     try:
         download_url = get_download_url(version, platform)
-        print("Downloading '{}'..".format(download_url))
+        print(f"Downloading '{download_url}'..")
         with urlopen(download_url) as response:
             with ZipFile(BytesIO(response.read())) as zipfile:
                 zipfile.extractall(target_path)
     except URLError as exc:
-        eprint("Could not download löve: {}".format(exc))
+        eprint(f"Could not download löve: {exc}")
         eprint(
             "If there is in fact no download on GitHub for this version, specify 'love_binaries' manually."
         )
@@ -63,16 +52,16 @@ def prepare_rcedit():
             # I don't use the latest release, so I can be sure that the executable behaves as expected
             rcedit_download_url = "https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x64.exe"
             os.makedirs(os.path.dirname(rcedit_path), exist_ok=True)
-            print("Downloading '{}'..".format(rcedit_download_url))
+            print(f"Downloading '{rcedit_download_url}'..")
             urlretrieve(rcedit_download_url, rcedit_path)
         except URLError as exc:
-            sys.exit("Could not download rcedit: {}".format(exc))
+            sys.exit(f"Could not download rcedit: {exc}")
 
 
 def can_set_metadata(platform):
     if platform.startswith("win"):
         return True
-    elif shutil.which("wine") != None:
+    elif shutil.which("wine") is not None:
         return True
     return False
 
@@ -85,33 +74,33 @@ def get_exe_metadata(config, version):
         metadata = config["windows"]["exe_metadata"]
 
     # Default value in löve: "LÖVE <version>"
-    if not "FileDescription" in metadata:
-        if version != None:
+    if "FileDescription" not in metadata:
+        if version is not None:
             metadata["FileDescription"] = "{} {}".format(config["name"], version)
         else:
             metadata["FileDescription"] = config["name"]
 
     # Default value is löve version
-    if not "FileVersion" in metadata:
-        if version != None:
+    if "FileVersion" not in metadata:
+        if version is not None:
             metadata["FileVersion"] = version
         else:
             metadata["FileVersion"] = ""
 
     # Default value is "LÖVE World Domination Inc."
-    if not "CompanyName" in metadata:
+    if "CompanyName" not in metadata:
         metadata["CompanyName"] = ""
 
     # Default value is "Copyright © 2006-2020 LÖVE Development Team"
-    if not "LegalCopyright" in metadata:
+    if "LegalCopyright" not in metadata:
         metadata["LegalCopyright"] = ""
 
     # Default value in löve: "LÖVE"
-    if not "ProductName" in metadata:
+    if "ProductName" not in metadata:
         metadata["ProductName"] = config["name"]
 
     # Default value is same as FileVersion's
-    if not "ProductVersion" in metadata:
+    if "ProductVersion" not in metadata:
         metadata["ProductVersion"] = metadata["FileVersion"]
 
     # löve also sets "InternalName" to ""
@@ -138,7 +127,7 @@ def get_rcedit_command():
                 sys.exit(1)
         return ["wine", rcedit_path]
     else:
-        sys.exit("Can not execute rcedit on ths platform ({})".format(sys.platform))
+        sys.exit(f"Can not execute rcedit on ths platform ({sys.platform})")
 
 
 def set_exe_metadata(exe_path, metadata, icon_file):
@@ -148,9 +137,9 @@ def set_exe_metadata(exe_path, metadata, icon_file):
         args.extend(["--set-version-string", k, v])
 
     temp_ico_path = None
-    if icon_file != None:
+    if icon_file is not None:
         if not os.path.isfile(icon_file):
-            sys.exit("Icon file does not exist '{}'".format(icon_file))
+            sys.exit(f"Icon file does not exist '{icon_file}'")
         if icon_file.lower().endswith(".ico"):
             args.extend(["--set-icon", icon_file])
         else:
@@ -160,11 +149,11 @@ def set_exe_metadata(exe_path, metadata, icon_file):
                 img.save(temp_ico_path)
                 args.extend(["--set-icon", temp_ico_path])
             except FileNotFoundError as exc:
-                sys.exit("Could not find icon file: {}".format(exc))
+                sys.exit(f"Could not find icon file: {exc}")
             except UnidentifiedImageError as exc:
-                sys.exit("Could not read icon file: {}".format(exc))
-            except IOError as exc:
-                sys.exit("Could not convert icon to .ico: {}".format(exc))
+                sys.exit(f"Could not read icon file: {exc}")
+            except OSError as exc:
+                sys.exit(f"Could not convert icon to .ico: {exc}")
 
     res = subprocess.run(args, capture_output=True)
     if temp_ico_path:
@@ -178,10 +167,10 @@ def build_windows(config, version, target, target_directory, love_file_path):
         love_binaries = config[target]["love_binaries"]
     else:
         assert "love_version" in config
-        print("No love binaries specified for target {}".format(target))
+        print(f"No love binaries specified for target {target}")
         love_binaries = get_default_love_binary_dir(config["love_version"], target)
         if os.path.isdir(love_binaries):
-            print("Love binaries already present in '{}'".format(love_binaries))
+            print(f"Love binaries already present in '{love_binaries}'")
         else:
             download_love(config["love_version"], target)
 
@@ -205,15 +194,17 @@ def build_windows(config, version, target, target_directory, love_file_path):
 
         # Default value is "löve.exe" of course.
         # This value is used to determine if an executable has been renamed
-        if not "OriginalFilename" in metadata:
+        if "OriginalFilename" not in metadata:
             metadata["OriginalFilename"] = os.path.basename(target_exe_path)
 
         set_exe_metadata(
-            src("love.exe"), metadata, config.get("icon_file", None),
+            src("love.exe"),
+            metadata,
+            config.get("icon_file", None),
         )
     else:
         print(
-            "Cannot set exe metadata on this platform ({})".format(sys.platform),
+            f"Cannot set exe metadata on this platform ({sys.platform})",
             file=sys.stderr,
         )
         print("If you are using a POSIX-compliant system, try installing WINE.")
@@ -246,7 +237,7 @@ def build_windows(config, version, target, target_directory, love_file_path):
         elif os.path.isdir(k):
             shutil.copytree(k, path)
         else:
-            sys.exit("Cannot copy archive file '{}'".format(k))
+            sys.exit(f"Cannot copy archive file '{k}'")
 
     if target in config and "shared_libraries" in config[target]:
         for f in config[target]["shared_libraries"]:

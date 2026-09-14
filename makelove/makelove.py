@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
 import argparse
-import os
-import shutil
-import sys
 import json
-import subprocess
-from email.utils import formatdate
-from importlib.metadata import PackageNotFoundError, version as package_version
-import zipfile
+import os
 import re
+import shutil
+import subprocess
+import sys
+import zipfile
+from email.utils import formatdate
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as package_version
 
-from .config import get_config, all_targets, init_config_assistant
-from .hooks import execute_hook
+from .config import all_targets, get_config, init_config_assistant
 from .filelist import FileList
+from .hooks import execute_hook
 from .jsonfile import JsonFile
-from .windows import build_windows
 from .linux import build_linux
-from .macos import build_macos
 from .lovejs import build_lovejs
+from .macos import build_macos
+from .windows import build_windows
 
 all_hooks = ["prebuild", "postbuild"]
+
 
 # Sadly argparse cannot handle nargs="*" and choices and will error if not at least one argument is provided
 def _choices(values):
@@ -45,7 +47,7 @@ def files_in_dir(dir_path):
 def bump_version(version):
     m = re.search(r"\d+$", version)
     if not m:
-        sys.exit("Could not bump version '{}'".format(version))
+        sys.exit(f"Could not bump version '{version}'")
     num = int(m.group(0)) + 1
     return version[: m.start(0)] + str(num)
 
@@ -57,7 +59,7 @@ def get_build_log_path(build_directory):
 def prepare_build_directory(args, config, version):
     assert "build_directory" in config
     build_directory = config["build_directory"]
-    versioned_build = version != None
+    versioned_build = version is not None
 
     if versioned_build:
         # Pretend the build directory is the version directory
@@ -94,7 +96,7 @@ def execute_hooks(hook, config, version, targets, build_directory):
 def git_ls_tree(path=".", visited=None):
     p = os.path
 
-    if visited == None:
+    if visited is None:
         visited = set()
     rpath = p.realpath(path)
     if rpath in visited:
@@ -131,7 +133,7 @@ def assemble_game_directory(args, config, game_directory):
                 try:
                     file_list.include_raw(item)
                 except FileNotFoundError:
-                    sys.exit("Could not find git-tracked file '{}'".format(item))
+                    sys.exit(f"Could not find git-tracked file '{item}'")
         elif rule[0] == "-":
             file_list.exclude(rule[1:])
         elif rule[0] == "+":
@@ -163,7 +165,7 @@ def get_build_version(args, config):
 
     # Bump version if we are doing a versioned build and no version is specified
     were_versioned_builds_made = os.path.isfile(build_log_path)
-    if were_versioned_builds_made and args.version == None:
+    if were_versioned_builds_made and args.version is None:
         print(
             "Versioned builds were made in the past, but no version was specified for this build. Bumping last built version."
         )
@@ -259,7 +261,7 @@ def main():
             version = package_version("makelove")
         except PackageNotFoundError:
             version = "unknown"
-        print("makelove {}".format(version))
+        print(f"makelove {version}")
         sys.exit(0)
 
     if not os.path.isfile("main.lua"):
@@ -275,8 +277,8 @@ def main():
 
     version = get_build_version(args, config)
 
-    if version != None:
-        print("Building version '{}'".format(version))
+    if version is not None:
+        print(f"Building version '{version}'")
 
     if "all" in args.disabled_hooks:
         args.disabled_hooks = all_hooks
@@ -295,7 +297,7 @@ def main():
     build_log_path = get_build_log_path(config["build_directory"])
     print("Building targets:", ", ".join(targets))
 
-    if version != None:
+    if version is not None:
         with JsonFile(build_log_path, indent=4) as build_log:
             build_log.append(
                 {
@@ -306,7 +308,7 @@ def main():
                 }
             )
 
-    if not "prebuild" in args.disabled_hooks:
+    if "prebuild" not in args.disabled_hooks:
         execute_hooks("prebuild", config, version, targets, build_directory)
 
     love_directory = os.path.join(build_directory, "love")
@@ -317,7 +319,7 @@ def main():
     # If we do a versioned build and reached this place, force/--force
     # was passed, so we can just delete stuff.
 
-    rebuild_love = version != None or not args.resume
+    rebuild_love = version is not None or not args.resume
     if not os.path.isfile(love_file_path) or rebuild_love:
         print("Assembling game directory..")
         assemble_game_directory(args, config, game_directory)
@@ -328,7 +330,7 @@ def main():
             )
 
         create_love_file(game_directory, love_file_path)
-        print("Created {}".format(love_file_path))
+        print(f"Created {love_file_path}")
 
         if config.get("keep_game_directory", False):
             print("Keeping game directory because 'keep_game_directory' is true")
@@ -338,7 +340,7 @@ def main():
         print(".love file already exists. Not rebuilding.")
 
     for target in targets:
-        print(">> Building target {}".format(target))
+        print(f">> Building target {target}")
 
         target_directory = os.path.join(build_directory, target)
         # If target_directory is not a directory, let it throw an exception
@@ -356,12 +358,12 @@ def main():
         elif target == "lovejs":
             build_lovejs(config, version, target, target_directory, love_file_path)
 
-        print("Target {} complete".format(target))
+        print(f"Target {target} complete")
 
-    if not "postbuild" in args.disabled_hooks:
+    if "postbuild" not in args.disabled_hooks:
         execute_hooks("postbuild", config, version, targets, build_directory)
 
-    if version != None:
+    if version is not None:
         with JsonFile(build_log_path, indent=4) as build_log:
             build_log[-1]["completed"] = True
 

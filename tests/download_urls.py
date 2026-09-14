@@ -1,8 +1,8 @@
-from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
-from makelove.util import get_download_url
 from makelove.config import all_love_versions
+from makelove.util import get_download_url
 
 platform_versions = {
     "win32": all_love_versions[: all_love_versions.index("0.6.1")],
@@ -21,4 +21,4 @@ for platform in ["win32", "win64", "macos"]:
         except HTTPError as exc:
             code = exc.code
         assert code == 200
-        print("{} {}: {} => {}".format(platform, version, url, code))
+        print(f"{platform} {version}: {url} => {code}")

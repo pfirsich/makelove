@@ -1,18 +1,17 @@
+import json
 import os
-import sys
-from urllib.request import urlretrieve, urlopen, URLError
+import re
 import shutil
 import subprocess
-import re
-import json
+import sys
 from collections import namedtuple
+from urllib.request import URLError, urlopen, urlretrieve
 
-from PIL import Image, UnidentifiedImageError
 import appdirs
+from PIL import Image, UnidentifiedImageError
 
-from .util import fuse_files, tmpfile, parse_love_version, ask_yes_no
-from .config import all_love_versions, should_build_artifact
-from .hooks import execute_target_hook
+from .config import should_build_artifact
+from .util import ask_yes_no, fuse_files, parse_love_version, tmpfile
 
 
 def get_appimagetool_path():
@@ -72,7 +71,7 @@ def download_legacy_appimage(version):
                 ".".join(map(str, download_asset.version))
             )
         )
-        if not ask_yes_no("Use {} instead?".format(download_asset.name), default=True):
+        if not ask_yes_no(f"Use {download_asset.name} instead?", default=True):
             sys.exit("Aborting.")
 
     return download_appimage(download_asset.download_url)
@@ -83,7 +82,7 @@ def get_release_asset_list(url):
         with urlopen(url) as req:
             data = json.loads(req.read().decode())
     except Exception as exc:
-        sys.exit("Could not retrieve asset list: {}".format(exc))
+        sys.exit(f"Could not retrieve asset list: {exc}")
 
     return data["assets"]
 
@@ -91,12 +90,12 @@ def get_release_asset_list(url):
 def download_appimage(url):
     try:
         appimage_path = tmpfile(suffix=".AppImage")
-        print("Downloading {}..".format(url))
+        print(f"Downloading {url}..")
         urlretrieve(url, appimage_path)
         os.chmod(appimage_path, 0o755)
         return appimage_path
     except Exception as exc:
-        sys.exit("Could not download löve appimage from {}: {}".format(url, exc))
+        sys.exit(f"Could not download löve appimage from {url}: {exc}")
 
 
 def get_appimagetool():
@@ -113,12 +112,12 @@ def get_appimagetool():
         url = "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
         try:
             os.makedirs(os.path.dirname(appimagetool_path), exist_ok=True)
-            print("Downloading '{}'..".format(url))
+            print(f"Downloading '{url}'..")
             urlretrieve(url, appimagetool_path)
             os.chmod(appimagetool_path, 0o755)
             return appimagetool_path
         except URLError as exc:
-            sys.exit("Could not download appimagetool from {}: {}".format(url, exc))
+            sys.exit(f"Could not download appimagetool from {url}: {exc}")
 
 
 def build_linux(config, version, target, target_directory, love_file_path):
@@ -133,7 +132,7 @@ def build_linux(config, version, target, target_directory, love_file_path):
         # TODO: this shouldn't be necessary anymore if we're downloading from the official love repo
         source_appimage = download_love_appimage(config["love_version"])
 
-    print("Extracting source AppImage '{}'..".format(source_appimage))
+    print(f"Extracting source AppImage '{source_appimage}'..")
     ret = subprocess.run(
         [source_appimage, "--appimage-extract"],
         cwd=target_directory,
@@ -196,20 +195,20 @@ def build_linux(config, version, target, target_directory, love_file_path):
         icon_ext = os.path.splitext(icon_file)[1]
         if icon_ext in [".png", ".svg", ".svgz", ".xpm"]:
             dest_icon_path = appdir(game_name + icon_ext)
-            print("Copying {} to {}".format(icon_file, dest_icon_path))
+            print(f"Copying {icon_file} to {dest_icon_path}")
             shutil.copy2(icon_file, dest_icon_path)
         else:
             dest_icon_path = appdir(f"{game_name}.png")
-            print("Converting {} to {}".format(icon_file, dest_icon_path))
+            print(f"Converting {icon_file} to {dest_icon_path}")
             try:
                 img = Image.open(icon_file)
                 img.save(dest_icon_path)
             except FileNotFoundError as exc:
-                sys.exit("Could not find icon file: {}".format(exc))
+                sys.exit(f"Could not find icon file: {exc}")
             except UnidentifiedImageError as exc:
-                sys.exit("Could not read icon file: {}".format(exc))
-            except IOError as exc:
-                sys.exit("Could not convert icon to .png: {}".format(exc))
+                sys.exit(f"Could not read icon file: {exc}")
+            except OSError as exc:
+                sys.exit(f"Could not convert icon to .png: {exc}")
     # appimagetool will create a symlink from the icon to .DirIcon
     os.remove(appdir(".DirIcon"))
 
@@ -233,7 +232,7 @@ def build_linux(config, version, target, target_directory, love_file_path):
     with open(appdir(f"{game_name}.desktop"), "w") as f:
         f.write("[Desktop Entry]\n")
         for k, v in desktop_file_fields.items():
-            f.write("{}={}\n".format(k, v))
+            f.write(f"{k}={v}\n")
 
     # archive files
     archive_files = {}
@@ -250,8 +249,7 @@ def build_linux(config, version, target, target_directory, love_file_path):
         elif os.path.isdir(k):
             shutil.copytree(k, path)
         else:
-            sys.exit("Cannot copy archive file '{}'".format(k))
-
+            sys.exit(f"Cannot copy archive file '{k}'")
 
     # Shared libraries
     if target in config and "shared_libraries" in config[target]:
@@ -281,7 +279,7 @@ def build_linux(config, version, target, target_directory, love_file_path):
         )
         if ret.returncode != 0:
             sys.exit("Could not create appimage: {}".format(ret.stderr.decode("utf-8")))
-        print("Created {}".format(appimage_path))
+        print(f"Created {appimage_path}")
 
     if should_build_artifact(config, target, "appdir", False):
         os.rename(appdir_path, os.path.join(target_directory, "AppDir"))

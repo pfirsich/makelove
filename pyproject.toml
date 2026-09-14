@@ -2,6 +2,9 @@
 requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+license-files = ["LICENSE"]
+
 [tool.setuptools.packages.find]
 include = ["makelove"]
 
@@ -24,8 +27,7 @@ maintainers = [
 ]
 description = "A packaging tool for [löve](https://love2d.org) games"
 readme = "README.md"
-license = "MIT"
-license-files = ["LICENSE"]
+license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
@@ -39,6 +41,14 @@ Repository = "https://github.com/pfirsich/makelove"
 
 [project.scripts]
 makelove = "makelove.makelove:main"
+
+[tool.ruff]
+line-length = 88
+target-version = "py38"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP"]
+ignore = ["E731"]
 
 [dependency-groups]
 dev = [

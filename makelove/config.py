@@ -1,8 +1,7 @@
 import os
-import shutil
+import re
 import subprocess
 import sys
-import re
 
 import toml
 
@@ -110,7 +109,7 @@ config_params = {
 
 
 def should_build_artifact(config, target, artifact, default):
-    if not target in config or not "artifacts" in config[target]:
+    if target not in config or "artifacts" not in config[target]:
         return default
     if artifact in config[target]["artifacts"]:
         return True
@@ -155,7 +154,7 @@ def get_conf_filename():
     candidates = ["conf.lua", "conf.moon", "conf.ts"]
     for name in candidates:
         if os.path.isfile(name):
-            print("Found {}".format(name))
+            print(f"Found {name}")
             return name
     print("Could not find löve config file")
     return None
@@ -163,7 +162,7 @@ def get_conf_filename():
 
 def guess_love_version():
     filename = get_conf_filename()
-    if filename == None:
+    if filename is None:
         return None
 
     with open(filename) as f:
@@ -174,11 +173,7 @@ def guess_love_version():
     if len(matches) == 0:
         return None
     elif len(matches) > 1:
-        print(
-            "Could not determine löve version unambiguously. Candidates: {}".format(
-                matches
-            )
-        )
+        print(f"Could not determine löve version unambiguously. Candidates: {matches}")
         return None
     return matches[0]
 
@@ -193,7 +188,7 @@ def get_default_love_files(build_directory):
         return [
             "+*",
             "-*/.*",
-            "-./{}/*".format(build_directory),
+            f"-./{build_directory}/*",
         ]
 
 
@@ -201,18 +196,18 @@ def validate_config(config):
     try:
         val.Section(config_params).validate(config)
     except ValueError as exc:
-        sys.exit("Could not parse config:\n{}".format(exc))
+        sys.exit(f"Could not parse config:\n{exc}")
 
 
 def get_raw_config(config_path):
-    if config_path != None:
+    if config_path is not None:
         if not os.path.isfile(config_path):
-            sys.exit("Config file '{}' does not exist".format(config_path))
-        print("Loading config file '{}'".format(config_path))
+            sys.exit(f"Config file '{config_path}' does not exist")
+        print(f"Loading config file '{config_path}'")
         return load_config_file(config_path)
     else:
         if os.path.isfile(default_config_name):
-            print("Loading config from default path '{}'".format(default_config_name))
+            print(f"Loading config from default path '{default_config_name}'")
             return load_config_file(default_config_name)
         else:
             print("No config file found. Using default config.")
@@ -221,27 +216,23 @@ def get_raw_config(config_path):
 
 def get_config(config_path):
     config = get_raw_config(config_path)
-    if not "name" in config:
+    if "name" not in config:
         config["name"] = guess_name()
         print("Guessing project name as '{}'".format(config["name"]))
-    if not "love_version" in config:
+    if "love_version" not in config:
         conf_love_version = guess_love_version()
         if conf_love_version:
             config["love_version"] = conf_love_version
-            print(
-                "Guessed löve version from löve config file: {}".format(
-                    conf_love_version
-                )
-            )
+            print(f"Guessed löve version from löve config file: {conf_love_version}")
         else:
             config["love_version"] = "11.3"  # update this manually here
             print("Assuming default löve version '{}'".format(config["love_version"]))
-    if not "default_targets" in config:
+    if "default_targets" not in config:
         config["default_targets"] = get_default_targets()
-    if not "build_directory" in config:
+    if "build_directory" not in config:
         config["build_directory"] = "makelove-build"
         print("Using default build directory '{}'".format(config["build_directory"]))
-    if not "love_files" in config:
+    if "love_files" not in config:
         config["love_files"] = get_default_love_files(config["build_directory"])
         print("Using default love_files patterns: {}".format(config["love_files"]))
     validate_config(config)
@@ -260,7 +251,7 @@ love_files = [
 
 def init_config_assistant():
     if os.path.isfile(default_config_name):
-        sys.exit("{} already exists in this directory".format(default_config_name))
+        sys.exit(f"{default_config_name} already exists in this directory")
 
     if not is_inside_git_repo():
         print("If you plan on using git, please initialize the repository first!")
@@ -280,5 +271,5 @@ def init_config_assistant():
 
     with open(default_config_name, "w") as f:
         f.write(config)
-    print("Configuration written to {}".format(default_config_name))
+    print(f"Configuration written to {default_config_name}")
     print("You should probably adjust love_files before you build.")

@@ -1,9 +1,6 @@
-import subprocess
-import tempfile
-import copy
-import shlex
-import sys
 import os
+import subprocess
+import sys
 
 import toml
 
@@ -18,12 +15,14 @@ def execute_hook(command, config, version, targets, build_directory):
         toml.dump(config, f)
 
     env = os.environ.copy()
-    env.update({
-        "MAKELOVE_TEMP_CONFIG": tmp_config_path,
-        "MAKELOVE_VERSION": version or "",
-        "MAKELOVE_TARGETS": ",".join(targets),
-        "MAKELOVE_BUILD_DIRECTORY": build_directory,
-    })
+    env.update(
+        {
+            "MAKELOVE_TEMP_CONFIG": tmp_config_path,
+            "MAKELOVE_VERSION": version or "",
+            "MAKELOVE_TARGETS": ",".join(targets),
+            "MAKELOVE_BUILD_DIRECTORY": build_directory,
+        }
+    )
 
     command_replaced = command.format(
         version=version or "", build_directory=build_directory
@@ -32,19 +31,22 @@ def execute_hook(command, config, version, targets, build_directory):
     try:
         subprocess.run(command_replaced, shell=True, check=True, env=env)
     except Exception as e:
-        sys.exit("Hook '{}' failed: {}".format(command, e))
+        sys.exit(f"Hook '{command}' failed: {e}")
 
     new_config = get_config(tmp_config_path)
     os.remove(tmp_config_path)
     return new_config
 
+
 def execute_target_hook(command, target):
     env = os.environ.copy()
-    env.update({
-        "MAKELOVE_TARGET": target,
-    })
+    env.update(
+        {
+            "MAKELOVE_TARGET": target,
+        }
+    )
 
     try:
         subprocess.run(command, shell=True, check=True, env=env)
     except Exception as e:
-        sys.exit("Build target hook '{}' failed: {}".format(command, e))
+        sys.exit(f"Build target hook '{command}' failed: {e}")

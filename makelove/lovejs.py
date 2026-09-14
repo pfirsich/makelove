@@ -4,8 +4,8 @@ import os
 import sys
 import uuid
 from pathlib import Path
+from urllib.request import URLError, urlretrieve
 from zipfile import ZipFile
-from urllib.request import urlretrieve, URLError
 
 from .util import eprint, get_default_love_binary_dir, parse_love_version
 
@@ -15,15 +15,15 @@ def download_love(version, platform):
         eprint("love.js only supports löve 11. The web build might not be functional.")
 
     target_path = get_default_love_binary_dir(version, platform)
-    print("Downloading love binaries to: '{}'".format(target_path))
+    print(f"Downloading love binaries to: '{target_path}'")
 
     os.makedirs(target_path, exist_ok=True)
     try:
         download_url = "https://github.com/Davidobot/love.js/archive/master.zip"
-        print("Downloading '{}'..".format(download_url))
+        print(f"Downloading '{download_url}'..")
         urlretrieve(download_url, os.path.join(target_path, "love.zip"))
     except URLError as exc:
-        eprint("Could not download löve: {}".format(exc))
+        eprint(f"Could not download löve: {exc}")
         eprint(
             "If there is in fact no download on GitHub for this version, specify 'love_binaries' manually."
         )
@@ -45,10 +45,10 @@ def build_lovejs(config, version, target, target_directory, love_file_path):
         love_binaries = config[target]["love_binaries"]
     else:
         assert "love_version" in config
-        print("No love binaries specified for target {}".format(target))
+        print(f"No love binaries specified for target {target}")
         love_binaries = get_default_love_binary_dir(config["love_version"], target)
         if os.path.isdir(love_binaries):
-            print("Love binaries already present in '{}'".format(love_binaries))
+            print(f"Love binaries already present in '{love_binaries}'")
         else:
             download_love(config["love_version"], target)
 

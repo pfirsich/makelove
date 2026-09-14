@@ -1,4 +1,4 @@
-class Section(object):
+class Section:
     def __init__(self, params):
         self.params = params
 
@@ -7,15 +7,13 @@ class Section(object):
             raise ValueError
         for param in obj:
             if param not in self.params:
-                raise ValueError("Unknown parameter '{}'".format(param))
+                raise ValueError(f"Unknown parameter '{param}'")
             try:
                 self.params[param].validate(obj[param])
             except ValueError as exc:
                 if len(str(exc)) == 0:
                     raise ValueError(
-                        "Invalid value for parameter '{}'. Expected: {}".format(
-                            param, self.params[param].description()
-                        )
+                        f"Invalid value for parameter '{param}'. Expected: {self.params[param].description()}"
                     )
                 else:
                     raise
@@ -25,7 +23,7 @@ class Section(object):
         return "Section"
 
 
-class Bool(object):
+class Bool:
     def validate(self, obj):
         if not isinstance(obj, bool):
             raise ValueError
@@ -35,7 +33,7 @@ class Bool(object):
         return "Boolean"
 
 
-class String(object):
+class String:
     def validate(self, obj):
         if not isinstance(obj, str):
             raise ValueError
@@ -45,7 +43,7 @@ class String(object):
         return "String"
 
 
-class Any(object):
+class Any:
     def validate(self, obj):
         return obj
 
@@ -53,12 +51,12 @@ class Any(object):
         return "Any value"
 
 
-class Choice(object):
+class Choice:
     def __init__(self, *choices):
         self.choices = choices
 
     def validate(self, obj):
-        if not obj in self.choices:
+        if obj not in self.choices:
             raise ValueError
         return obj
 
@@ -68,7 +66,7 @@ class Choice(object):
 
 # This validator is mostly used for documentation, since on Linux
 # for example almost anything could be a path
-class Path(object):
+class Path:
     def validate(self, obj):
         if not isinstance(obj, str):
             raise ValueError
@@ -79,7 +77,7 @@ class Path(object):
 
 
 # Same as path
-class Command(object):
+class Command:
     def validate(self, obj):
         if not isinstance(obj, str):
             raise ValueError
@@ -89,7 +87,7 @@ class Command(object):
         return "Command"
 
 
-class List(object):
+class List:
     def __init__(self, value_validator):
         self.value_validator = value_validator
 
@@ -101,10 +99,10 @@ class List(object):
         return obj
 
     def description(self):
-        return "List({})".format(self.value_validator.description())
+        return f"List({self.value_validator.description()})"
 
 
-class Dict(object):
+class Dict:
     def __init__(self, key_validator, value_validator):
         self.key_validator = key_validator
         self.value_validator = value_validator
@@ -118,12 +116,10 @@ class Dict(object):
         return obj
 
     def description(self):
-        return "Dictionary(key = {}, value = {})".format(
-            self.key_validator.description(), self.value_validator.description()
-        )
+        return f"Dictionary(key = {self.key_validator.description()}, value = {self.value_validator.description()})"
 
 
-class Option(object):
+class Option:
     def __init__(self, *option_validators):
         self.option_validators = option_validators
 
